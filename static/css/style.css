@@ -1,0 +1,122 @@
+:root {
+  --brand: #2f5bea;
+  --brand-dark: #1f3fae;
+  --surface: #f5f7fb;
+}
+
+body {
+  background: var(--surface);
+  min-height: 100vh;
+}
+
+.app-navbar {
+  background: linear-gradient(90deg, var(--brand-dark), var(--brand));
+}
+
+.card {
+  border: 0;
+  border-radius: 14px;
+}
+
+.stat-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(20, 30, 60, .08);
+}
+
+.stat-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--brand);
+  line-height: 1.2;
+}
+
+.stat-label {
+  font-size: .8rem;
+  color: #6b7280;
+}
+
+.search-box {
+  width: 220px;
+}
+
+.col-index {
+  width: 48px;
+}
+
+#results-table thead th {
+  white-space: nowrap;
+}
+
+th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+th.sortable:hover {
+  color: var(--brand);
+}
+
+.sort-icon {
+  opacity: .35;
+  font-size: .75rem;
+  margin-left: .25rem;
+}
+
+th.sort-active .sort-icon {
+  opacity: 1;
+  color: var(--brand);
+}
+
+.thumb {
+  width: 44px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 4px;
+  background: #e5e7eb;
+}
+
+.title-cell {
+  min-width: 220px;
+  max-width: 360px;
+}
+
+.url-cell {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stars {
+  color: #f5a623;
+  white-space: nowrap;
+  letter-spacing: 1px;
+}
+
+.stars .off {
+  color: #d1d5db;
+}
+
+.badge-stock {
+  font-weight: 500;
+}
+
+.alert .alert-body {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+}
+
+.alert .alert-code {
+  font-size: .75rem;
+  opacity: .75;
+}
+
+@media (max-width: 576px) {
+  .search-box {
+    width: 100%;
+  }
+}
