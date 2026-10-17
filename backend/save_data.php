@@ -102,6 +102,7 @@ function saveCrawlData($url, $html, $extra = [])
         'total_images' => isset($extra['total_images']) ? (int) $extra['total_images'] : null,
         'links' => $extra['links'] ?? null,
         'images' => $extra['images'] ?? null,
+        'products' => $extra['products'] ?? null,
         'html' => $html
     ];
 

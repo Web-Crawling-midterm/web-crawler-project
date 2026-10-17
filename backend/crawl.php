@@ -1,6 +1,12 @@
 
 <?php
 
+if (!function_exists('curl_init')) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'PHP chưa bật extension cURL. Hãy bật extension=curl trong php.ini rồi khởi động lại máy chủ.'], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 // Trả kết quả dưới dạng JSON
 header('Content-Type: application/json; charset=utf-8');
 
