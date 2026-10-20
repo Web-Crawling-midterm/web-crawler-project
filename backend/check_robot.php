@@ -279,3 +279,28 @@ function checkRobots($url, $userAgent = '*')
             : null
     ];
 }
+
+// Xử lý trực tiếp khi được gọi qua HTTP API
+if (realpath($_SERVER['SCRIPT_FILENAME'] ?? '') === realpath(__FILE__)) {
+    header('Content-Type: application/json; charset=utf-8');
+
+    // Hỗ trợ cả POST và GET
+    $url = trim($_POST['url'] ?? $_GET['url'] ?? '');
+    $userAgent = trim($_POST['user_agent'] ?? $_GET['user_agent'] ?? 'WebCrawlingStudentProject/1.0');
+
+    if ($url === '') {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'allowed' => false,
+            'message' => 'Vui lòng cung cấp URL cần kiểm tra robots.txt.'
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    $result = checkRobots($url, $userAgent);
+    $result['success'] = true;
+    echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+    exit;
+}
+
