@@ -121,8 +121,8 @@ curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_FOLLOWLOCATION => false,
     CURLOPT_CONNECTTIMEOUT => 10,
-    CURLOPT_TIMEOUT => 20,
-    CURLOPT_MAXFILESIZE => 2 * 1024 * 1024,
+    CURLOPT_TIMEOUT => 30,
+    CURLOPT_MAXFILESIZE => 10 * 1024 * 1024,
     CURLOPT_CAINFO => realpath($caCertPath),
     CURLOPT_USERAGENT => $userAgent,
     CURLOPT_SSL_VERIFYPEER => true,
@@ -142,9 +142,10 @@ $contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
 
 // Kiểm tra lỗi kết nối
 if ($html === false || $errorCode !== 0) {
-    sendError(502, 'Không thể tải website.', [
+    sendError(502, 'Không thể tải website: ' . $error, [
         'error' => $error,
-        'error_code' => $errorCode
+        'error_code' => $errorCode,
+        'status_code' => $statusCode
     ]);
 }
 
