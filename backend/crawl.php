@@ -116,73 +116,154 @@ if (!file_exists($caCertPath)) {
 
 // Không tự động theo chuyển hướng.
 // Nếu website chuyển hướng, cần kiểm tra URL đích riêng.
-curl_setopt_array($ch, [
+// Cấu hình cURL ban đầu
+$curlOptions = [
     CURLOPT_URL => $url,
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_FOLLOWLOCATION => false,
     CURLOPT_CONNECTTIMEOUT => 10,
     CURLOPT_TIMEOUT => 30,
-    CURLOPT_MAXFILESIZE => 10 * 1024 * 1024,
-    CURLOPT_CAINFO => realpath($caCertPath),
+    CURLOPT_MAXFILESIZE => 15 * 1024 * 1024,
     CURLOPT_USERAGENT => $userAgent,
     CURLOPT_SSL_VERIFYPEER => true,
     CURLOPT_SSL_VERIFYHOST => 2,
-    CURLOPT_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS
-]);
+    CURLOPT_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
+    CURLOPT_HEADER => true
+];
 
-// Tải nội dung website
-$html = curl_exec($ch);
-
-$error = curl_error($ch);
-$errorCode = curl_errno($ch);
-$statusCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-$contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
-
-// Không cần gọi curl_close() trong PHP 8.5
-
-// Kiểm tra lỗi kết nối
-if ($html === false || $errorCode !== 0) {
-    sendError(502, 'Không thể tải website: ' . $error, [
-        'error' => $error,
-        'error_code' => $errorCode,
-        'status_code' => $statusCode
-    ]);
+if (file_exists($caCertPath)) {
+    $curlOptions[CURLOPT_CAINFO] = realpath($caCertPath);
 }
 
-// Kiểm tra chuyển hướng
-if ($statusCode >= 300 && $statusCode < 400) {
-    sendError(
-        502,
-        'Website yêu cầu chuyển hướng. Hãy kiểm tra URL đích trước khi truy cập.',
-        [
-            'status_code' => $statusCode
-        ]
-    );
+curl_setopt_array($ch, $curlOptions);
+
+// Vòng lặp tải trang có xử lý chuyển hướng an toàn (tối đa 3 lần chuyển hướng)
+$currentUrl = $url;
+$redirectCount = 0;
+$maxRedirects = 3;
+$response = false;
+$statusCode = 0;
+$contentType = '';
+$headerSize = 0;
+
+while ($redirectCount <= $maxRedirects) {
+    curl_setopt($ch, CURLOPT_URL, $currentUrl);
+    $response = curl_exec($ch);
+    $errorCode = curl_errno($ch);
+    $error = curl_error($ch);
+
+    // Thử lại nếu gặp lỗi chứng chỉ SSL trên môi trường Windows dev
+    if ($errorCode === 60 || $errorCode === 77) {
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+        $response = curl_exec($ch);
+        $errorCode = curl_errno($ch);
+        $error = curl_error($ch);
+    }
+
+    if ($response === false || $errorCode !== 0) {
+        sendError(502, 'Không thể tải website: ' . $error, [
+            'error' => $error,
+            'error_code' => $errorCode,
+            'target_url' => $currentUrl
+        ]);
+    }
+
+    $statusCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $contentType = (string) curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
+    $headerSize = (int) curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+
+    // Kiểm tra chuyển hướng 301, 302, 303, 307, 308
+    if ($statusCode >= 300 && $statusCode < 400) {
+        $redirectUrl = (string) curl_getinfo($ch, CURLINFO_REDIRECT_URL);
+        if (!$redirectUrl) {
+            // Đọc từ header Location
+            $headerText = substr($response, 0, $headerSize);
+            if (preg_match('/^Location:\s*(.+)$/im', $headerText, $matches)) {
+                $redirectUrl = trim($matches[1]);
+            }
+        }
+
+        if (!$redirectUrl) {
+            sendError(502, 'Website yêu cầu chuyển hướng nhưng không cung cấp URL đích.', [
+                'status_code' => $statusCode
+            ]);
+        }
+
+        // Chuẩn hóa redirect URL nếu là tương đối
+        if (!preg_match('~^https?://~i', $redirectUrl)) {
+            $baseParts = parse_url($currentUrl);
+            if (strpos($redirectUrl, '/') === 0) {
+                $redirectUrl = ($baseParts['scheme'] ?? 'http') . '://' . ($baseParts['host'] ?? '') . $redirectUrl;
+            } else {
+                $baseDir = preg_replace('~/[^/]*$~', '/', $baseParts['path'] ?? '/');
+                $redirectUrl = ($baseParts['scheme'] ?? 'http') . '://' . ($baseParts['host'] ?? '') . $baseDir . $redirectUrl;
+            }
+        }
+
+        // Kiểm tra an toàn cho URL đích chuyển hướng (chống SSRF)
+        $newHost = parse_url($redirectUrl, PHP_URL_HOST);
+        $newScheme = strtolower((string) parse_url($redirectUrl, PHP_URL_SCHEME));
+
+        if (!in_array($newScheme, ['http', 'https'], true) || !$newHost) {
+            sendError(400, 'URL chuyển hướng không hợp lệ.');
+        }
+
+        $newIps = gethostbynamel($newHost);
+        if (!$newIps && filter_var($newHost, FILTER_VALIDATE_IP)) {
+            $newIps = [$newHost];
+        }
+
+        if (!$newIps) {
+            sendError(400, 'Không thể xác định địa chỉ máy chủ chuyển hướng.');
+        }
+
+        foreach ($newIps as $newIp) {
+            if (!isPublicIp($newIp)) {
+                sendError(400, 'URL chuyển hướng trỏ tới địa chỉ nội bộ không được phép.');
+            }
+        }
+
+        $currentUrl = $redirectUrl;
+        $redirectCount++;
+        continue;
+    }
+
+    break;
 }
+
+// Tách Header và Body
+$body = substr($response, $headerSize);
 
 // Kiểm tra mã HTTP
 if ($statusCode < 200 || $statusCode >= 300) {
-    sendError(502, 'Website phản hồi lỗi HTTP.', [
-        'status_code' => $statusCode
+    sendError(502, 'Website phản hồi lỗi HTTP ' . $statusCode . '.', [
+        'status_code' => $statusCode,
+        'final_url' => $currentUrl
     ]);
 }
 
-// Kiểm tra nội dung HTML
-if (
-    $contentType !== null &&
-    stripos($contentType, 'text/html') === false
-) {
-    sendError(415, 'URL này không trả về nội dung HTML.', [
-        'content_type' => $contentType
-    ]);
-}
+// Xác định loại nội dung: HTML, văn bản / tệp tài liệu hay tệp nhị phân
+$isHtml = (stripos($contentType, 'text/html') !== false || stripos($contentType, 'application/xhtml+xml') !== false);
+$isTextFile = (
+    stripos($contentType, 'text/') !== false ||
+    stripos($contentType, 'application/json') !== false ||
+    stripos($contentType, 'application/xml') !== false ||
+    stripos($contentType, 'application/javascript') !== false
+);
 
 // Trả kết quả cho frontend
 echo json_encode([
     'success' => true,
     'message' => 'Tải nội dung website thành công.',
     'url' => $url,
+    'final_url' => $currentUrl,
     'status_code' => $statusCode,
     'content_type' => $contentType,
-    'html' => $html
+    'is_html' => $isHtml,
+    'is_file' => !$isHtml,
+    'html' => $isHtml ? $body : '',
+    'raw_content' => $isTextFile ? $body : '',
+    'file_size' => strlen($body)
 ], JSON_UNESCAPED_UNICODE);
+

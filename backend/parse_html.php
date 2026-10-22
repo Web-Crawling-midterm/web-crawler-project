@@ -247,7 +247,11 @@ if (!$loaded) {
 $xpath = new DOMXPath($dom);
 
 // ==================================================
-// 7. LẤY TIÊU ĐỀ TRANG
+// Lấy tên miền nguồn để phân loại liên kết nội bộ / ngoài
+$baseHost = (string) parse_url($baseUrl, PHP_URL_HOST);
+
+// ==================================================
+// 7. LẤY TIÊU ĐỀ TRANG & METADATA
 // ==================================================
 
 $titleNode = $xpath->query('//title')->item(0);
@@ -256,14 +260,83 @@ $title = $titleNode
     ? trim(preg_replace('/\s+/u', ' ', $titleNode->textContent))
     : 'Không có tiêu đề';
 
+// Lấy thông tin Meta Tags (OpenGraph, Description, Author)
+$metaDescription = '';
+$ogTitle = '';
+$ogDescription = '';
+$ogImage = '';
+$metaAuthor = '';
+
+$descNode = $xpath->query('//meta[translate(@name, "DESCRIPTION", "description")="description"]/@content')->item(0);
+if ($descNode) {
+    $metaDescription = trim($descNode->nodeValue);
+}
+
+$ogTitleNode = $xpath->query('//meta[@property="og:title"]/@content')->item(0);
+if ($ogTitleNode) {
+    $ogTitle = trim($ogTitleNode->nodeValue);
+}
+
+$ogDescNode = $xpath->query('//meta[@property="og:description"]/@content')->item(0);
+if ($ogDescNode) {
+    $ogDescription = trim($ogDescNode->nodeValue);
+}
+
+$ogImgNode = $xpath->query('//meta[@property="og:image"]/@content')->item(0);
+if ($ogImgNode) {
+    $ogImage = resolveUrl($ogImgNode->nodeValue, $baseUrl);
+}
+
+$authorNode = $xpath->query('//meta[translate(@name, "AUTHOR", "author")="author"]/@content')->item(0);
+if ($authorNode) {
+    $metaAuthor = trim($authorNode->nodeValue);
+}
+
 // ==================================================
-// 8. LẤY LINKS VÀ LOẠI BỎ URL TRÙNG
+// 7.1. TRÍCH XUẤT CÁC TIÊU ĐỀ (HEADINGS H1 - H6)
 // ==================================================
 
+$headings = [];
+$headingNodes = $xpath->query('//h1 | //h2 | //h3 | //h4 | //h5 | //h6');
 
- // 8. LẤY LINKS VÀ LOẠI BỎ URL TRÙNG
+foreach ($headingNodes as $hNode) {
+    if (!$hNode instanceof DOMElement) {
+        continue;
+    }
+
+    $hText = trim(preg_replace('/\s+/u', ' ', $hNode->textContent));
+    if ($hText === '') {
+        continue;
+    }
+
+    $tag = strtolower($hNode->tagName);
+    $level = (int) substr($tag, 1);
+    $hId = trim($hNode->getAttribute('id'));
+
+    $headings[] = [
+        'tag' => $tag,
+        'level' => $level,
+        'text' => $hText,
+        'id' => $hId
+    ];
+}
+
+// ==================================================
+// 8. LẤY LINKS, PHÂN LOẠI & PHÁT HIỆN TỆP TẢI VỀ
+// ==================================================
+
 $links = [];
+$files = [];
 $seenUrls = [];
+$seenFiles = [];
+
+// Các đuôi tệp phổ biến cần phát hiện và trích xuất
+$fileExtensions = [
+    'pdf', 'docx', 'doc', 'xlsx', 'xls', 'pptx', 'ppt',
+    'zip', 'rar', '7z', 'tar', 'gz', 'csv', 'txt', 'rtf',
+    'epub', 'mobi', 'mp3', 'mp4', 'wav', 'apk', 'exe', 'json', 'xml'
+];
+$fileExtPattern = '/\.(' . implode('|', $fileExtensions) . ')(?:[\?#]|$)/i';
 
 foreach ($xpath->query('//a[@href]') as $node) {
     if (!$node instanceof DOMElement) {
@@ -276,14 +349,9 @@ foreach ($xpath->query('//a[@href]') as $node) {
         continue;
     }
 
-    // Bỏ link không có nội dung văn bản
     $text = trim(
         preg_replace('/\s+/u', ' ', $node->textContent)
     );
-
-    if ($text === '') {
-        continue;
-    }
 
     $resolvedUrl = resolveUrl($href, $baseUrl);
 
@@ -291,20 +359,48 @@ foreach ($xpath->query('//a[@href]') as $node) {
         continue;
     }
 
-    // Bỏ phần #fragment để nhận diện cùng một trang
     $parts = parse_url($resolvedUrl);
 
     if ($parts === false || empty($parts['host'])) {
         continue;
     }
 
+    $linkHost = $parts['host'];
+    $isInternal = (strcasecmp($linkHost, $baseHost) === 0);
+
+    // Kiểm tra xem link có phải tệp tải về hay không
+    $path = $parts['path'] ?? '';
+    $isFile = false;
+    $fileExt = '';
+
+    if (preg_match($fileExtPattern, $path, $extMatch)) {
+        $isFile = true;
+        $fileExt = strtolower($extMatch[1]);
+        $fileName = basename($path);
+
+        if (!isset($seenFiles[$resolvedUrl])) {
+            $seenFiles[$resolvedUrl] = true;
+            $files[] = [
+                'name' => $fileName ?: ($text ?: 'Tệp ' . strtoupper($fileExt)),
+                'url' => $resolvedUrl,
+                'extension' => $fileExt,
+                'anchor_text' => $text,
+                'is_internal' => $isInternal
+            ];
+        }
+    }
+
+    // Chuẩn hóa URL cho danh sách liên kết
     $normalizedUrl = strtolower($parts['scheme'] ?? 'https')
         . '://'
-        . strtolower($parts['host'])
+        . strtolower($linkHost)
         . ($parts['port'] ?? '')
-        . ($parts['path'] ?? '/');
+        . ($path ?: '/');
 
-    // Loại bỏ URL trùng
+    if (isset($parts['query'])) {
+        $normalizedUrl .= '?' . $parts['query'];
+    }
+
     if (isset($seenUrls[$normalizedUrl])) {
         continue;
     }
@@ -312,11 +408,13 @@ foreach ($xpath->query('//a[@href]') as $node) {
     $seenUrls[$normalizedUrl] = true;
 
     $links[] = [
-        'text' => $text,
-        'url' => $normalizedUrl
+        'text' => $text !== '' ? $text : '(liên kết không có chữ)',
+        'url' => $resolvedUrl,
+        'is_internal' => $isInternal,
+        'type' => $isFile ? 'file' : ($isInternal ? 'internal' : 'external'),
+        'extension' => $fileExt ?: null
     ];
 }
-
 
 // ==================================================
 // 9. LẤY IMAGES VÀ LOẠI BỎ ẢNH TRÙNG
@@ -342,15 +440,29 @@ foreach ($xpath->query('//img') as $node) {
 
     $seenImages[$src] = true;
 
+    $imgParts = parse_url($src);
+    $imgPath = $imgParts['path'] ?? '';
+    $imgExt = '';
+
+    if (preg_match('/\.([a-zA-Z0-9]+)(?:[\?#]|$)/', $imgPath, $m)) {
+        $imgExt = strtolower($m[1]);
+    }
+
+    $imgHost = $imgParts['host'] ?? '';
+    $imgIsInternal = (strcasecmp($imgHost, $baseHost) === 0);
+
     $images[] = [
         'alt' => trim($node->getAttribute('alt')),
-        'src' => $src
+        'src' => $src,
+        'extension' => $imgExt ?: 'ảnh',
+        'width' => $node->getAttribute('width') ?: null,
+        'height' => $node->getAttribute('height') ?: null,
+        'is_internal' => $imgIsInternal
     ];
 }
 
 // ==================================================
-// 10. LẤY DỮ LIỆU SẢN PHẨM
-// Dành cho website có cấu trúc Books to Scrape
+// 10. LẤY DỮ LIỆU SẢN PHẨM (BOOKS TO SCRAPE)
 // ==================================================
 
 $products = [];
@@ -456,7 +568,6 @@ foreach ($productCards as $card) {
         'price' => $price,
         'currency' => 'GBP',
         'rating' => $rating,
-
         'availability' => $availabilityNode
             ? trim(
                 preg_replace(
@@ -470,16 +581,199 @@ foreach ($productCards as $card) {
 }
 
 // ==================================================
-// 11. TRẢ KẾT QUẢ JSON
+// 10.1. TRÍCH XUẤT BÀI VIẾT BLOG & TIN TỨC (BLOG EXTRACTION)
+// ==================================================
+
+$articles = [];
+$seenArticleUrls = [];
+
+// Tìm các thẻ đại diện cho bài viết blog phổ biến
+$articleContainers = $xpath->query(
+    "//article[not(contains(@class, 'product_pod'))] | " .
+    "//*[contains(@class, 'post-item') or contains(@class, 'blog-post') or contains(@class, 'entry-card') or contains(@class, 'item-news') or contains(@class, 'article-card') or contains(@class, 'story-item')]"
+);
+
+// Nếu không tìm thấy bằng class chuyên biệt, quét các thẻ <article> thông thường hoặc cấu trúc h2/h3 có link bài
+if ($articleContainers->length === 0) {
+    $articleContainers = $xpath->query("//div[contains(@class, 'post') or contains(@class, 'article') or contains(@class, 'entry')]");
+}
+
+foreach ($articleContainers as $container) {
+    if (!$container instanceof DOMElement) {
+        continue;
+    }
+
+    // 1. Tiêu đề và link bài viết
+    $aTitleNode = $xpath->query('.//h1//a | .//h2//a | .//h3//a | .//h4//a | .//*[contains(@class, "title")]//a | .//a[contains(@class, "title")]', $container)->item(0);
+    $artTitle = '';
+    $artUrl = '';
+
+    if ($aTitleNode instanceof DOMElement) {
+        $artTitle = trim(preg_replace('/\s+/u', ' ', $aTitleNode->textContent));
+        $artUrl = resolveUrl($aTitleNode->getAttribute('href'), $baseUrl);
+    } else {
+        // Thử tìm thẻ h1/h2/h3 trực tiếp nếu không lồng thẻ <a>
+        $hNode = $xpath->query('.//h1 | .//h2 | .//h3 | .//h4', $container)->item(0);
+        if ($hNode) {
+            $artTitle = trim(preg_replace('/\s+/u', ' ', $hNode->textContent));
+        }
+        $anyLink = $xpath->query('.//a[@href]', $container)->item(0);
+        if ($anyLink instanceof DOMElement) {
+            $artUrl = resolveUrl($anyLink->getAttribute('href'), $baseUrl);
+        }
+    }
+
+    if ($artTitle === '' || $artUrl === '' || isset($seenArticleUrls[$artUrl])) {
+        continue;
+    }
+
+    $seenArticleUrls[$artUrl] = true;
+
+    // 2. Ngày đăng bài viết
+    $artDate = '';
+    $timeNode = $xpath->query('.//time', $container)->item(0);
+    if ($timeNode instanceof DOMElement) {
+        $artDate = trim($timeNode->getAttribute('datetime') ?: $timeNode->textContent);
+    } else {
+        $dateNode = $xpath->query('.//*[contains(@class, "date") or contains(@class, "time") or contains(@class, "published")]', $container)->item(0);
+        if ($dateNode) {
+            $artDate = trim(preg_replace('/\s+/u', ' ', $dateNode->textContent));
+        }
+    }
+
+    // 3. Tác giả
+    $artAuthor = '';
+    $authorNode = $xpath->query('.//*[@rel="author"] | .//*[contains(@class, "author") or contains(@class, "byline")]', $container)->item(0);
+    if ($authorNode) {
+        $artAuthor = trim(preg_replace('/\s+/u', ' ', $authorNode->textContent));
+    }
+
+    // 4. Đoạn tóm tắt (Excerpt)
+    $artExcerpt = '';
+    $excerptNode = $xpath->query('.//*[contains(@class, "excerpt") or contains(@class, "summary") or contains(@class, "desc") or contains(@class, "snippet")] | .//p', $container)->item(0);
+    if ($excerptNode) {
+        $artExcerpt = trim(preg_replace('/\s+/u', ' ', $excerptNode->textContent));
+        if (mb_strlen($artExcerpt, 'UTF-8') > 300) {
+            $artExcerpt = mb_substr($artExcerpt, 0, 300, 'UTF-8') . '...';
+        }
+    }
+
+    // 5. Ảnh bài viết
+    $artImage = '';
+    $artImgNode = $xpath->query('.//img', $container)->item(0);
+    if ($artImgNode instanceof DOMElement) {
+        $artImage = getImageUrl($artImgNode, $baseUrl);
+    }
+
+    $articles[] = [
+        'title' => $artTitle,
+        'url' => $artUrl,
+        'author' => $artAuthor ?: ($metaAuthor ?: 'Không rõ tác giả'),
+        'date' => $artDate ?: 'Không rõ ngày đăng',
+        'excerpt' => $artExcerpt,
+        'image_url' => $artImage ?: $ogImage
+    ];
+}
+
+// Nếu trang hiện tại chính là một bài viết đơn lẻ (Single Post / Detail Page), trích xuất bài viết đó
+if (empty($articles) && ($metaDescription || $ogTitle || count($headings) > 0)) {
+    $mainH1 = $xpath->query('//h1')->item(0);
+    if ($mainH1) {
+        $singleTitle = trim(preg_replace('/\s+/u', ' ', $mainH1->textContent));
+        $singleExcerpt = $metaDescription ?: ($ogDescription ?: '');
+        $articles[] = [
+            'title' => $singleTitle,
+            'url' => $baseUrl,
+            'author' => $metaAuthor ?: 'Tác giả bài viết',
+            'date' => date('Y-m-d'),
+            'excerpt' => $singleExcerpt,
+            'image_url' => $ogImage
+        ];
+    }
+}
+
+// ==================================================
+// 10.2. TÌM LIÊN KẾT PHÂN TRANG KẾ TIẾP (NEXT PAGE URL)
+// ==================================================
+
+$nextPageUrl = '';
+
+$nextCandidates = $xpath->query(
+    "//li[contains(concat(' ', normalize-space(@class), ' '), ' next ')]//a | " .
+    "//a[@rel='next'] | " .
+    "//a[contains(concat(' ', normalize-space(@class), ' '), ' next ')] | " .
+    "//a[contains(@class, 'pagination-next')] | " .
+    "//a[contains(translate(normalize-space(.), 'NEXT', 'next'), 'next')] | " .
+    "//a[contains(translate(normalize-space(.), 'TIẾP', 'tiếp'), 'tiếp')]"
+);
+
+foreach ($nextCandidates as $cNode) {
+    if ($cNode instanceof DOMElement) {
+        $nextHref = trim($cNode->getAttribute('href'));
+        if ($nextHref !== '') {
+            $resolvedNext = resolveUrl($nextHref, $baseUrl);
+            if ($resolvedNext !== '' && $resolvedNext !== $baseUrl) {
+                $nextPageUrl = $resolvedNext;
+                break;
+            }
+        }
+    }
+}
+
+// ==================================================
+// 10.3. XỬ LÝ TRUY VẤN XPATH TÙY CHỌN (CUSTOM FILTER)
+// ==================================================
+
+$customResults = [];
+$customXpath = trim($_POST['custom_xpath'] ?? '');
+
+if ($customXpath !== '') {
+    try {
+        $customNodes = $xpath->query($customXpath);
+        if ($customNodes !== false) {
+            foreach ($customNodes as $cNode) {
+                $customResults[] = [
+                    'text' => trim(preg_replace('/\s+/u', ' ', $cNode->textContent)),
+                    'html' => $dom->saveHTML($cNode)
+                ];
+                if (count($customResults) >= 100) {
+                    break;
+                }
+            }
+        }
+    } catch (\Throwable $e) {
+        // Bỏ qua lỗi cú pháp XPath tùy biến
+    }
+}
+
+// ==================================================
+// 11. TRẢ KẾT QUẢ JSON ĐẦY ĐỦ
 // ==================================================
 
 echo json_encode([
     'success' => true,
     'title' => $title,
+    'metadata' => [
+        'description' => $metaDescription,
+        'og_title' => $ogTitle,
+        'og_description' => $ogDescription,
+        'og_image' => $ogImage,
+        'author' => $metaAuthor
+    ],
     'total_links' => count($links),
     'total_images' => count($images),
+    'total_headings' => count($headings),
+    'total_articles' => count($articles),
+    'total_files' => count($files),
+    'total_products' => count($products),
+    'next_page_url' => $nextPageUrl,
+    'headings' => $headings,
+    'articles' => $articles,
+    'files' => $files,
     'links' => $links,
     'images' => $images,
-    'products' => $products
+    'products' => $products,
+    'custom_results' => $customResults
 ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+
 

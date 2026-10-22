@@ -64,22 +64,35 @@
         <div class="card-body">
           <form id="crawl-form" novalidate>
             <div class="row g-3 align-items-end">
-              <div class="col-12 col-md-7 col-lg-8">
-                <label for="url-input" class="form-label fw-semibold small">URL Website nguồn cần thu thập:</label>
+              <div class="col-12 col-md-5 col-lg-5">
+                <label for="url-input" class="form-label fw-semibold small">URL Website nguồn cần thu thập (Blog, Store, File...):</label>
                 <div class="input-group">
                   <span class="input-group-text bg-light"><i class="bi bi-link-45deg"></i></span>
                   <input type="url" class="form-control" id="url-input"
-                         placeholder="https://books.toscrape.com/" autocomplete="off" required>
+                         placeholder="https://books.toscrape.com/ hoặc URL Blog/Tệp..." autocomplete="off" required>
                 </div>
                 <div class="invalid-feedback" id="url-feedback">Vui lòng nhập URL hợp lệ bắt đầu bằng http:// hoặc https://</div>
               </div>
 
-              <div class="col-6 col-md-2 col-lg-2">
-                <label for="max-pages" class="form-label fw-semibold small">Số trang (Pages):</label>
-                <input type="number" class="form-control" id="max-pages" min="1" max="50" value="1" title="Phiên bản demo giới hạn 1 trang để đảm bảo an toàn máy chủ">
+              <div class="col-6 col-md-3 col-lg-3">
+                <label for="crawl-mode" class="form-label fw-semibold small">Bộ lọc trích xuất mục tiêu:</label>
+                <select class="form-select" id="crawl-mode">
+                  <option value="all">⚡ Tất cả (Tự động phát hiện)</option>
+                  <option value="blog">📰 Blog &amp; Bài viết (Tin tức)</option>
+                  <option value="headings">📑 Cây Tiêu đề (Headings H1-H6)</option>
+                  <option value="files">📁 Tệp tin &amp; Tài liệu (PDF, ZIP...)</option>
+                  <option value="links">🔗 Danh sách Liên kết (Links)</option>
+                  <option value="images">🖼️ Bộ sưu tập Hình ảnh</option>
+                  <option value="products">🛍️ Sản phẩm (Books to Scrape)</option>
+                </select>
               </div>
 
-              <div class="col-6 col-md-3 col-lg-2">
+              <div class="col-6 col-md-2 col-lg-2">
+                <label for="max-pages" class="form-label fw-semibold small">Số trang (Pages):</label>
+                <input type="number" class="form-control" id="max-pages" min="1" max="10" value="1" title="Crawler đa trang tự động theo liên kết Next">
+              </div>
+
+              <div class="col-12 col-md-2 col-lg-2">
                 <button type="submit" class="btn btn-primary w-100" id="crawl-btn">
                   <span class="spinner-border spinner-border-sm me-1 d-none" id="btn-spinner" role="status"></span>
                   <i class="bi bi-play-circle me-1" id="btn-icon"></i>
@@ -88,20 +101,43 @@
               </div>
             </div>
 
+            <!-- Bộ lọc tùy biến nâng cao (XPath Filter) -->
+            <div class="mt-2">
+              <a class="small text-decoration-none" data-bs-toggle="collapse" href="#advanced-filter-box" role="button" aria-expanded="false">
+                <i class="bi bi-funnel me-1"></i>Tùy chọn bộ lọc nâng cao (Custom XPath Selector) <i class="bi bi-chevron-down small"></i>
+              </a>
+              <div class="collapse mt-2" id="advanced-filter-box">
+                <div class="p-2.5 bg-light rounded border">
+                  <div class="row g-2 align-items-center">
+                    <div class="col-12 col-md-8">
+                      <label for="custom-xpath" class="form-label small fw-semibold mb-1">Cú pháp XPath tùy chỉnh (tùy chọn):</label>
+                      <input type="text" class="form-control form-control-sm" id="custom-xpath" placeholder="//article | //h2[@class='entry-title'] | //a[contains(@href, '.pdf')]">
+                    </div>
+                    <div class="col-12 col-md-4">
+                      <label class="form-label small text-muted mb-1 d-block">Gợi ý cú pháp:</label>
+                      <span class="badge text-bg-secondary me-1 xpath-preset" style="cursor: pointer;" data-xpath="//h1 | //h2">//h1|//h2</span>
+                      <span class="badge text-bg-secondary me-1 xpath-preset" style="cursor: pointer;" data-xpath="//article">//article</span>
+                      <span class="badge text-bg-secondary xpath-preset" style="cursor: pointer;" data-xpath="//a[contains(@href,'.pdf')]">File .PDF</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <!-- Nguồn mẫu -->
             <div class="mt-3 pt-2 border-top">
               <span class="small text-muted me-2"><i class="bi bi-lightning-charge me-1"></i>Website thử nghiệm mẫu:</span>
-              <button type="button" class="quick-pill example-url" data-url="https://books.toscrape.com/">Books to Scrape (Trang chủ)</button>
-              <button type="button" class="quick-pill example-url" data-url="https://books.toscrape.com/catalogue/category/books/travel_2/index.html">Danh mục Travel</button>
-              <button type="button" class="quick-pill example-url" data-url="https://books.toscrape.com/catalogue/category/books/mystery_3/index.html">Danh mục Mystery</button>
+              <button type="button" class="quick-pill example-url" data-url="https://books.toscrape.com/">Books to Scrape (Sản phẩm)</button>
+              <button type="button" class="quick-pill example-url" data-url="https://vnexpress.net/so-hoa">VnExpress Số Hóa (Blog/Tin tức)</button>
               <button type="button" class="quick-pill example-url" data-url="https://quotes.toscrape.com/">Quotes to Scrape</button>
+              <button type="button" class="quick-pill example-url" data-url="https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/">Trang chứa tệp PDF mẫu (Tệp)</button>
             </div>
 
             <!-- Ghi chú cơ chế -->
             <div class="small text-muted mt-2 d-flex align-items-center justify-content-between flex-wrap gap-2">
               <div>
                 <i class="bi bi-shield-lock me-1 text-success"></i>
-                Hệ thống tự động kiểm tra IP công khai (chống SSRF), kiểm tra robots.txt trước khi tải và parse cây DOM bằng XPath.
+                Hỗ trợ cào Đa trang (Pagination), lọc Blog/Bài viết, Tiêu đề, Tệp tin, Liên kết, Hình ảnh; kiểm tra IP chống SSRF và kiểm tra robots.txt.
               </div>
               <a href="#" class="text-decoration-none small" id="quick-check-robots-link">
                 <i class="bi bi-box-arrow-up-right me-1"></i>Kiểm tra robots.txt của URL này
@@ -115,29 +151,41 @@
       <div id="status-area" aria-live="polite" class="mb-3"></div>
 
       <!-- Thống kê kết quả -->
-      <section id="summary" class="row g-3 mb-3 d-none" aria-label="Thống kê">
-        <div class="col-6 col-md-3">
+      <section id="summary" class="row g-2 mb-3 d-none" aria-label="Thống kê">
+        <div class="col-4 col-md-2">
+          <div class="stat-box">
+            <div class="stat-num" id="stat-articles">0</div>
+            <div class="stat-desc"><i class="bi bi-journal-richtext me-1"></i>Bài viết Blog</div>
+          </div>
+        </div>
+        <div class="col-4 col-md-2">
+          <div class="stat-box">
+            <div class="stat-num" id="stat-headings">0</div>
+            <div class="stat-desc"><i class="bi bi-type-h1 me-1"></i>Cây Tiêu đề</div>
+          </div>
+        </div>
+        <div class="col-4 col-md-2">
+          <div class="stat-box">
+            <div class="stat-num" id="stat-files">0</div>
+            <div class="stat-desc"><i class="bi bi-file-earmark-arrow-down me-1"></i>Tệp tài liệu</div>
+          </div>
+        </div>
+        <div class="col-4 col-md-2">
           <div class="stat-box">
             <div class="stat-num" id="stat-items">0</div>
-            <div class="stat-desc"><i class="bi bi-box me-1"></i>Sản phẩm trích xuất</div>
+            <div class="stat-desc"><i class="bi bi-basket me-1"></i>Sản phẩm</div>
           </div>
         </div>
-        <div class="col-6 col-md-3">
+        <div class="col-4 col-md-2">
           <div class="stat-box">
             <div class="stat-num" id="stat-links">0</div>
-            <div class="stat-desc"><i class="bi bi-link-45deg me-1"></i>Liên kết tìm thấy</div>
+            <div class="stat-desc"><i class="bi bi-link-45deg me-1"></i>Liên kết</div>
           </div>
         </div>
-        <div class="col-6 col-md-3">
+        <div class="col-4 col-md-2">
           <div class="stat-box">
             <div class="stat-num" id="stat-images">0</div>
-            <div class="stat-desc"><i class="bi bi-image me-1"></i>Hình ảnh phát hiện</div>
-          </div>
-        </div>
-        <div class="col-6 col-md-3">
-          <div class="stat-box">
-            <div class="stat-num" id="stat-time">0s</div>
-            <div class="stat-desc"><i class="bi bi-stopwatch me-1"></i>Thời gian thực thi</div>
+            <div class="stat-desc"><i class="bi bi-image me-1"></i>Hình ảnh</div>
           </div>
         </div>
       </section>
@@ -150,10 +198,25 @@
             <span class="badge text-bg-primary rounded-pill" id="count-badge">0</span>
           </div>
 
-          <!-- Bộ chọn chế độ xem dữ liệu (Sản phẩm / Liên kết / Hình ảnh / Raw HTML) -->
-          <ul class="nav nav-pills nav-fill small gap-1" id="data-view-pills" role="tablist">
+          <!-- Bộ chọn chế độ xem dữ liệu (Sản phẩm / Bài viết / Tiêu đề / Tệp tin / Liên kết / Hình ảnh / Raw HTML) -->
+          <ul class="nav nav-pills nav-fill small gap-1 flex-wrap" id="data-view-pills" role="tablist">
             <li class="nav-item" role="presentation">
-              <button class="nav-link active py-1 px-2.5" id="view-products-tab" data-view="products" type="button">
+              <button class="nav-link active py-1 px-2.5" id="view-articles-tab" data-view="articles" type="button">
+                <i class="bi bi-journal-richtext me-1"></i>Bài viết / Blog (<span id="pill-art-count">0</span>)
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link py-1 px-2.5" id="view-headings-tab" data-view="headings" type="button">
+                <i class="bi bi-type-h1 me-1"></i>Cây Tiêu đề (<span id="pill-head-count">0</span>)
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link py-1 px-2.5" id="view-files-tab" data-view="files" type="button">
+                <i class="bi bi-file-earmark-arrow-down me-1"></i>Tệp tin (<span id="pill-file-count">0</span>)
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link py-1 px-2.5" id="view-products-tab" data-view="products" type="button">
                 <i class="bi bi-basket me-1"></i>Sản phẩm (<span id="pill-prod-count">0</span>)
               </button>
             </li>
@@ -177,17 +240,163 @@
 
         <div class="card-body">
           
-          <!-- Thanh công cụ lọc & xuất dữ liệu -->
+          <!-- Thanh công cụ xuất dữ liệu & Menu xuất dữ liệu cụ thể -->
           <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3 pb-2 border-bottom">
-            <!-- Bộ lọc (Áp dụng cho view sản phẩm) -->
-            <div class="d-flex flex-wrap gap-2 align-items-center flex-grow-1" id="filter-controls-area">
-              <!-- Tìm kiếm từ khóa -->
+            <div class="small text-muted" id="view-hint-text">
+              <i class="bi bi-info-circle me-1"></i>Chọn tab để lọc và xem dữ liệu cụ thể tương ứng.
+            </div>
+
+            <!-- Các nút Xuất file & Lưu trữ cụ thể -->
+            <div class="d-flex gap-2">
+              <div class="dropdown">
+                <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" id="btn-export-dropdown">
+                  <i class="bi bi-download me-1"></i>Lưu &amp; Xuất dữ liệu cụ thể
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm small">
+                  <li><h6 class="dropdown-header">Xuất toàn bộ</h6></li>
+                  <li><a class="dropdown-item export-action" href="#" data-type="all" data-format="json"><i class="bi bi-filetype-json me-2 text-danger"></i>Toàn bộ dữ liệu (JSON)</a></li>
+                  <li><a class="dropdown-item export-action" href="#" data-type="all" data-format="csv"><i class="bi bi-filetype-csv me-2 text-success"></i>Toàn bộ dữ liệu (CSV)</a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><h6 class="dropdown-header">Xuất dữ liệu cụ thể</h6></li>
+                  <li><a class="dropdown-item export-action" href="#" data-type="articles" data-format="csv"><i class="bi bi-journal-text me-2 text-primary"></i>Chỉ Bài viết Blog (CSV)</a></li>
+                  <li><a class="dropdown-item export-action" href="#" data-type="headings" data-format="csv"><i class="bi bi-type-h1 me-2 text-warning"></i>Chỉ Cây Tiêu đề H1-H6 (CSV)</a></li>
+                  <li><a class="dropdown-item export-action" href="#" data-type="files" data-format="csv"><i class="bi bi-file-earmark-zip me-2 text-info"></i>Chỉ Danh sách Tệp tin (CSV)</a></li>
+                  <li><a class="dropdown-item export-action" href="#" data-type="links" data-format="csv"><i class="bi bi-link-45deg me-2 text-secondary"></i>Chỉ Danh sách Liên kết (CSV)</a></li>
+                  <li><a class="dropdown-item export-action" href="#" data-type="images" data-format="csv"><i class="bi bi-images me-2 text-danger"></i>Chỉ Danh sách Hình ảnh (CSV)</a></li>
+                  <li><a class="dropdown-item export-action" href="#" data-type="products" data-format="csv"><i class="bi bi-basket me-2 text-success"></i>Chỉ Sản phẩm Books (CSV)</a></li>
+                </ul>
+              </div>
+              <button type="button" class="btn btn-outline-secondary btn-sm" id="export-json" title="Xuất định dạng JSON chuẩn">
+                <i class="bi bi-filetype-json me-1 text-danger"></i>JSON
+              </button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" id="export-csv" title="Xuất CSV hỗ trợ tiếng Việt UTF-8">
+                <i class="bi bi-filetype-csv me-1 text-success"></i>CSV
+              </button>
+            </div>
+          </div>
+
+          <!-- VIEW 0: BÀI VIẾT BLOG & TIN TỨC (MỚI) -->
+          <div id="view-articles-content">
+            <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+              <div class="input-group input-group-sm" style="max-width: 280px;">
+                <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
+                <input type="search" class="form-control" id="filter-art-input" placeholder="Lọc tiêu đề bài viết hoặc tác giả...">
+              </div>
+              <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-reset-art-filter" title="Đặt lại bộ lọc bài viết">
+                <i class="bi bi-arrow-counterclockwise"></i>
+              </button>
+            </div>
+
+            <div class="results-table-wrapper table-responsive">
+              <table class="table table-hover align-middle table-academic">
+                <thead>
+                  <tr>
+                    <th scope="col" style="width: 45px;">#</th>
+                    <th scope="col" style="width: 70px;">Ảnh bìa</th>
+                    <th scope="col">Tiêu đề bài viết Blog</th>
+                    <th scope="col" style="width: 140px;">Tác giả</th>
+                    <th scope="col" style="width: 130px;">Ngày đăng</th>
+                    <th scope="col">Tóm tắt trích dẫn</th>
+                    <th scope="col" style="width: 65px;" class="text-center">Đọc</th>
+                  </tr>
+                </thead>
+                <tbody id="articles-table-body"></tbody>
+              </table>
+            </div>
+            <div id="empty-articles" class="text-center text-muted py-4 d-none">
+              <i class="bi bi-journal-x fs-3 d-block mb-1"></i>
+              Không tìm thấy bài viết nào khớp với tiêu chí lọc hoặc website không có cấu trúc bài viết blog.
+            </div>
+          </div>
+
+          <!-- VIEW 1: CÂY TIÊU ĐỀ HEADINGS H1-H6 (MỚI) -->
+          <div id="view-headings-content" class="d-none">
+            <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+              <div class="input-group input-group-sm" style="max-width: 260px;">
+                <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
+                <input type="search" class="form-control" id="filter-heading-input" placeholder="Lọc từ khóa tiêu đề...">
+              </div>
+              <select class="form-select form-select-sm" id="filter-heading-level" style="max-width: 150px;">
+                <option value="">Tất cả cấp độ</option>
+                <option value="h1">Chỉ thẻ H1</option>
+                <option value="h2">Chỉ thẻ H2</option>
+                <option value="h3">Chỉ thẻ H3</option>
+                <option value="h4-h6">Thẻ H4 - H6</option>
+              </select>
+              <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-reset-head-filter" title="Đặt lại bộ lọc tiêu đề">
+                <i class="bi bi-arrow-counterclockwise"></i>
+              </button>
+            </div>
+
+            <div class="results-table-wrapper table-responsive">
+              <table class="table table-hover align-middle table-academic">
+                <thead>
+                  <tr>
+                    <th style="width: 45px;">#</th>
+                    <th style="width: 90px;">Cấp độ</th>
+                    <th>Nội dung tiêu đề (Heading Text)</th>
+                    <th style="width: 150px;">Thuộc tính ID / Anchor</th>
+                  </tr>
+                </thead>
+                <tbody id="headings-table-body"></tbody>
+              </table>
+            </div>
+            <div id="empty-headings" class="text-center text-muted py-4 d-none">
+              <i class="bi bi-fonts fs-3 d-block mb-1"></i>
+              Không tìm thấy tiêu đề nào phù hợp.
+            </div>
+          </div>
+
+          <!-- VIEW 2: TỆP TIN & TÀI LIỆU DOWNLOADABLE FILES (MỚI) -->
+          <div id="view-files-content" class="d-none">
+            <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+              <div class="input-group input-group-sm" style="max-width: 260px;">
+                <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
+                <input type="search" class="form-control" id="filter-file-input" placeholder="Lọc tên tệp tài liệu...">
+              </div>
+              <select class="form-select form-select-sm" id="filter-file-ext" style="max-width: 150px;">
+                <option value="">Tất cả định dạng</option>
+                <option value="pdf">Tệp PDF (.pdf)</option>
+                <option value="doc">Tệp Word (.doc, .docx)</option>
+                <option value="xls">Tệp Excel (.xls, .xlsx, .csv)</option>
+                <option value="zip">Tệp nén (.zip, .rar, .7z)</option>
+                <option value="txt">Tệp văn bản (.txt)</option>
+              </select>
+              <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-reset-file-filter" title="Đặt lại bộ lọc tệp">
+                <i class="bi bi-arrow-counterclockwise"></i>
+              </button>
+            </div>
+
+            <div class="results-table-wrapper table-responsive">
+              <table class="table table-hover align-middle table-academic">
+                <thead>
+                  <tr>
+                    <th style="width: 45px;">#</th>
+                    <th style="width: 90px;" class="text-center">Định dạng</th>
+                    <th>Tên tệp tin</th>
+                    <th>Văn bản liên kết (Anchor text)</th>
+                    <th style="width: 110px;" class="text-center">Phạm vi</th>
+                    <th style="width: 110px;" class="text-center">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody id="files-table-body"></tbody>
+              </table>
+            </div>
+            <div id="empty-files" class="text-center text-muted py-4 d-none">
+              <i class="bi bi-file-earmark-x fs-3 d-block mb-1"></i>
+              Không phát hiện tệp tài liệu (PDF, Word, Excel, ZIP...) nào trên website này.
+            </div>
+          </div>
+
+          <!-- VIEW 3: BẢNG SẢN PHẨM (BOOKS TO SCRAPE) -->
+          <div id="view-products-content" class="d-none">
+            <!-- Bộ lọc sản phẩm -->
+            <div class="d-flex flex-wrap gap-2 align-items-center flex-grow-1 mb-3" id="filter-controls-area">
               <div class="input-group input-group-sm" style="max-width: 240px;">
                 <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
                 <input type="search" class="form-control" id="filter-input" placeholder="Lọc tiêu đề..." aria-label="Lọc theo tiêu đề">
               </div>
 
-              <!-- Lọc theo sao -->
               <select class="form-select form-select-sm" id="filter-rating" style="max-width: 150px;">
                 <option value="">Tất cả đánh giá</option>
                 <option value="5">5 sao (★★★★★)</option>
@@ -197,32 +406,17 @@
                 <option value="1">1 sao (★☆☆☆☆)</option>
               </select>
 
-              <!-- Lọc tình trạng kho -->
               <select class="form-select form-select-sm" id="filter-stock" style="max-width: 150px;">
                 <option value="">Tất cả tình trạng</option>
                 <option value="in-stock">Còn hàng (In stock)</option>
                 <option value="out-of-stock">Hết hàng</option>
               </select>
 
-              <!-- Reset filter button -->
               <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-reset-filter" title="Xóa tất cả bộ lọc">
                 <i class="bi bi-arrow-counterclockwise"></i>
               </button>
             </div>
 
-            <!-- Các nút Xuất file & Lưu trữ -->
-            <div class="d-flex gap-2">
-              <button type="button" class="btn btn-outline-secondary btn-sm" id="export-json" title="Xuất định dạng JSON chuẩn">
-                <i class="bi bi-filetype-json me-1 text-danger"></i>Xuất JSON
-              </button>
-              <button type="button" class="btn btn-outline-secondary btn-sm" id="export-csv" title="Xuất CSV hỗ trợ tiếng Việt và Excel UTF-8">
-                <i class="bi bi-filetype-csv me-1 text-success"></i>Xuất CSV
-              </button>
-            </div>
-          </div>
-
-          <!-- VIEW 1: BẢNG SẢN PHẨM -->
-          <div id="view-products-content">
             <div class="results-table-wrapper table-responsive">
               <table class="table table-hover align-middle table-academic" id="results-table">
                 <thead>
@@ -253,13 +447,30 @@
             </div>
           </div>
 
-          <!-- VIEW 2: DANH SÁCH LIÊN KẾT (LINKS) -->
+          <!-- VIEW 4: DANH SÁCH LIÊN KẾT (LINKS) -->
           <div id="view-links-content" class="d-none">
+            <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+              <div class="input-group input-group-sm" style="max-width: 260px;">
+                <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
+                <input type="search" class="form-control" id="filter-link-input" placeholder="Lọc từ khóa text hoặc URL...">
+              </div>
+              <select class="form-select form-select-sm" id="filter-link-type" style="max-width: 170px;">
+                <option value="">Tất cả loại liên kết</option>
+                <option value="internal">Chỉ liên kết nội bộ</option>
+                <option value="external">Chỉ liên kết ngoài</option>
+                <option value="file">Chỉ liên kết tệp</option>
+              </select>
+              <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-reset-link-filter" title="Đặt lại bộ lọc liên kết">
+                <i class="bi bi-arrow-counterclockwise"></i>
+              </button>
+            </div>
+
             <div class="results-table-wrapper table-responsive">
               <table class="table table-hover align-middle table-academic">
                 <thead>
                   <tr>
                     <th style="width: 45px;">#</th>
+                    <th style="width: 110px;" class="text-center">Phạm vi</th>
                     <th>Văn bản liên kết (Anchor text)</th>
                     <th>Đường dẫn (URL trích xuất)</th>
                     <th style="width: 70px;" class="text-center">Mở</th>
@@ -268,14 +479,39 @@
                 <tbody id="links-table-body"></tbody>
               </table>
             </div>
+            <div id="empty-links" class="text-center text-muted py-4 d-none">
+              <i class="bi bi-link fs-3 d-block mb-1"></i>
+              Không tìm thấy liên kết nào khớp với bộ lọc.
+            </div>
           </div>
 
-          <!-- VIEW 3: BỘ SƯU TẬP HÌNH ẢNH (IMAGES) -->
+          <!-- VIEW 5: BỘ SƯU TẬP HÌNH ẢNH (IMAGES) -->
           <div id="view-images-content" class="d-none">
+            <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+              <div class="input-group input-group-sm" style="max-width: 260px;">
+                <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
+                <input type="search" class="form-control" id="filter-img-input" placeholder="Lọc mô tả alt hoặc URL ảnh...">
+              </div>
+              <select class="form-select form-select-sm" id="filter-img-ext" style="max-width: 150px;">
+                <option value="">Tất cả định dạng</option>
+                <option value="jpg">JPG / JPEG</option>
+                <option value="png">PNG</option>
+                <option value="webp">WEBP</option>
+                <option value="svg">SVG</option>
+              </select>
+              <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-reset-img-filter" title="Đặt lại bộ lọc ảnh">
+                <i class="bi bi-arrow-counterclockwise"></i>
+              </button>
+            </div>
+
             <div class="image-grid" id="images-grid-body"></div>
+            <div id="empty-images" class="text-center text-muted py-4 d-none">
+              <i class="bi bi-image fs-3 d-block mb-1"></i>
+              Không tìm thấy hình ảnh nào khớp với bộ lọc.
+            </div>
           </div>
 
-          <!-- VIEW 4: MÃ HTML THÔ (RAW HTML PREVIEW) -->
+          <!-- VIEW 6: MÃ HTML THÔ (RAW HTML PREVIEW) -->
           <div id="view-raw-content" class="d-none">
             <div class="d-flex justify-content-between align-items-center mb-2">
               <span class="small text-muted"><i class="bi bi-file-earmark-code me-1"></i>Nội dung HTML thô đã tải về từ server:</span>
@@ -440,11 +676,14 @@
             </div>
 
             <div class="col-12 col-md-6 text-md-end">
+              <button type="button" class="btn btn-outline-danger btn-sm me-2" id="btn-clear-saved" title="Xóa toàn bộ lịch sử">
+                <i class="bi bi-trash3 me-1"></i>Xóa tất cả
+              </button>
               <button type="button" class="btn btn-outline-primary btn-sm me-2" id="btn-refresh-saved">
-                <i class="bi bi-arrow-clockwise me-1"></i>Tải lại danh sách
+                <i class="bi bi-arrow-clockwise me-1"></i>Tải lại
               </button>
               <button type="button" class="btn btn-primary btn-sm" id="btn-view-saved-items">
-                <i class="bi bi-eye me-1"></i>Xem dữ liệu trên bảng chính
+                <i class="bi bi-eye me-1"></i>Xem trên bảng
               </button>
             </div>
           </div>
@@ -461,17 +700,20 @@
             <table class="table table-hover table-academic mb-0">
               <thead>
                 <tr>
-                  <th style="width: 50px;">#</th>
-                  <th style="width: 160px;">Thời gian</th>
+                  <th style="width: 45px;">#</th>
+                  <th style="width: 150px;">Thời gian</th>
                   <th>URL Website nguồn</th>
                   <th>Tiêu đề trang</th>
-                  <th style="width: 90px;" class="text-center">Liên kết</th>
-                  <th style="width: 90px;" class="text-center">Hình ảnh</th>
-                  <th style="width: 90px;" class="text-center">Sản phẩm</th>
+                  <th style="width: 85px;" class="text-center">Bài viết</th>
+                  <th style="width: 75px;" class="text-center">Tệp tin</th>
+                  <th style="width: 75px;" class="text-center">Liên kết</th>
+                  <th style="width: 75px;" class="text-center">Hình ảnh</th>
+                  <th style="width: 75px;" class="text-center">Sản phẩm</th>
+                  <th style="width: 80px;" class="text-center">Thao tác</th>
                 </tr>
               </thead>
               <tbody id="saved-history-body">
-                <tr><td colspan="7" class="text-center py-4 text-muted">Đang tải lịch sử...</td></tr>
+                <tr><td colspan="10" class="text-center py-4 text-muted">Đang tải lịch sử...</td></tr>
               </tbody>
             </table>
           </div>

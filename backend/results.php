@@ -13,6 +13,22 @@ foreach ($data as $record) {
             $item['image_url']=resolveSavedUrl($item['image_url'] ?? '',$base);
             if (!empty($item['url'])) $items[]=$item;
         }
+    } elseif (!empty($record['articles']) && is_array($record['articles'])) {
+        foreach ($record['articles'] as $art) {
+            $art['url']=resolveSavedUrl($art['url'] ?? '',$base);
+            $art['image_url']=resolveSavedUrl($art['image_url'] ?? '',$base);
+            if (!empty($art['url'])) {
+                $items[]=[
+                    'title'=>$art['title'] ?? '(không có tiêu đề)',
+                    'url'=>$art['url'],
+                    'image_url'=>$art['image_url'] ?? '',
+                    'price'=>null,
+                    'currency'=>'',
+                    'rating'=>null,
+                    'availability'=>$art['author'] ?? ''
+                ];
+            }
+        }
     } elseif (!empty($record['links']) && is_array($record['links'])) {
         foreach ($record['links'] as $link) {
             $href=resolveSavedUrl($link['url'] ?? '',$base);
@@ -27,11 +43,15 @@ $recordsSummary = [];
 foreach ($data as $i => $rec) {
     $recordsSummary[] = [
         'id' => $i + 1,
+        'index' => $i,
         'url' => $rec['url'] ?? '',
         'saved_at' => $rec['saved_at'] ?? '',
         'title' => $rec['title'] ?? '',
         'total_links' => isset($rec['total_links']) ? (int)$rec['total_links'] : (is_array($rec['links'] ?? null) ? count($rec['links']) : 0),
         'total_images' => isset($rec['total_images']) ? (int)$rec['total_images'] : (is_array($rec['images'] ?? null) ? count($rec['images']) : 0),
+        'total_headings' => isset($rec['total_headings']) ? (int)$rec['total_headings'] : (is_array($rec['headings'] ?? null) ? count($rec['headings']) : 0),
+        'total_articles' => isset($rec['total_articles']) ? (int)$rec['total_articles'] : (is_array($rec['articles'] ?? null) ? count($rec['articles']) : 0),
+        'total_files' => isset($rec['total_files']) ? (int)$rec['total_files'] : (is_array($rec['files'] ?? null) ? count($rec['files']) : 0),
         'total_products' => is_array($rec['products'] ?? null) ? count($rec['products']) : 0,
     ];
 }
