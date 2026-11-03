@@ -286,6 +286,10 @@ $currentFile = realpath(__FILE__) ?: '';
 if ($scriptFilename !== '' && strcasecmp($scriptFilename, $currentFile) === 0) {
     header('Content-Type: application/json; charset=utf-8');
 
+    // Yêu cầu đăng nhập (và token CSRF với POST)
+    require_once __DIR__ . '/auth.php';
+    requireLogin();
+
     // Hỗ trợ cả POST và GET
     $url = trim($_POST['url'] ?? $_GET['url'] ?? '');
     $userAgent = trim($_POST['user_agent'] ?? $_GET['user_agent'] ?? 'WebCrawlingStudentProject/1.0');

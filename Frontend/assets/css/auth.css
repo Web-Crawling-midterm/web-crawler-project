@@ -1,0 +1,31 @@
+/* Giao diện chung cho các trang đăng nhập / đăng ký / quên mật khẩu */
+body.auth-page {
+  justify-content: center; align-items: center; padding: 2rem 1rem; min-height: 100vh;
+  background:
+    radial-gradient(600px 400px at 10% 10%, rgba(124, 92, 255, .55), transparent 60%),
+    radial-gradient(700px 500px at 95% 95%, rgba(59, 91, 219, .6), transparent 60%),
+    linear-gradient(135deg, #101a5c 0%, #2745c4 60%, #6366f1 100%);
+}
+.auth-card {
+  width: 100%; max-width: 480px; background: #fff; border-radius: 22px; padding: 2.4rem 2.25rem;
+  box-shadow: 0 30px 70px rgba(8, 14, 60, .45);
+}
+.auth-logo {
+  width: 68px; height: 68px; border-radius: 18px; margin: 0 auto 1rem; display: flex; align-items: center;
+  justify-content: center; font-size: 2rem; color: #fff; background: linear-gradient(135deg, var(--primary), var(--accent));
+  box-shadow: 0 12px 26px rgba(39, 69, 196, .4);
+}
+.auth-card h1 { font-size: 1.7rem; font-weight: 800; text-align: center; margin: 0 0 .25rem; letter-spacing: -.5px; }
+.auth-sub { text-align: center; color: var(--text-muted); margin-bottom: 1.6rem; }
+.auth-links { display: flex; justify-content: space-between; flex-wrap: wrap; gap: .5rem; margin-top: 1.3rem; font-size: .95rem; }
+.auth-links a { color: var(--primary); font-weight: 600; text-decoration: none; }
+.auth-links a:hover { text-decoration: underline; }
+.auth-hint { background: var(--primary-light); border-radius: 12px; padding: .85rem 1rem; font-size: .9rem; margin-top: 1.4rem; }
+.auth-back { text-align: center; margin-top: 1.2rem; font-size: .92rem; }
+.auth-back a { color: #fff; opacity: .85; text-decoration: none; }
+.reset-link-box {
+  word-break: break-all; font-family: "JetBrains Mono", Consolas, monospace; font-size: .82rem;
+  background: #f4f6ff; border: 1px dashed #aab4ff; border-radius: 12px; padding: .8rem 1rem; margin-top: .6rem;
+}
+.pw-meter { height: 6px; border-radius: 99px; background: #e8eaf6; overflow: hidden; margin-top: .45rem; }
+.pw-meter div { height: 100%; width: 0; transition: width .25s, background .25s; }

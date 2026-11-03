@@ -3,6 +3,10 @@
 
 header('Content-Type: application/json; charset=utf-8');
 
+// Yêu cầu đăng nhập (và token CSRF với POST)
+require_once __DIR__ . '/auth.php';
+requireLogin();
+
 // ==================================================
 // 1. KIỂM TRA EXTENSION DOM
 // ==================================================

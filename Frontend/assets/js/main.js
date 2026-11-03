@@ -7,6 +7,24 @@
 (function () {
   "use strict";
 
+  // ===== Xác thực: tự gắn token CSRF vào mọi yêu cầu POST và xử lý hết phiên =====
+  const CSRF_TOKEN = (document.querySelector('meta[name="csrf-token"]') || {}).content || "";
+  const nativeFetch = window.fetch.bind(window);
+  window.fetch = async function (input, init) {
+    init = init || {};
+    const method = (init.method || "GET").toUpperCase();
+    if (method !== "GET") {
+      const headers = new Headers(init.headers || {});
+      headers.set("X-CSRF-Token", CSRF_TOKEN);
+      init.headers = headers;
+    }
+    const res = await nativeFetch(input, init);
+    if (res.status === 401) {           // hết phiên đăng nhập
+      window.location.href = "login.php";
+    }
+    return res;
+  };
+
   // ===== Cấu hình & Định tuyến API thông minh =====
   function getApiPath(endpoint) {
     const path = window.location.pathname;
@@ -1544,4 +1562,15 @@
 
   // Khởi động
   loadSavedData();
+
+  // ===== Đăng xuất =====
+  const logoutBtn = document.getElementById("logout-btn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", async function () {
+      try {
+        await fetch(getApiPath("auth.php") + "?action=logout", { method: "POST" });
+      } catch (e) { /* bỏ qua, vẫn chuyển về trang đăng nhập */ }
+      window.location.href = "login.php";
+    });
+  }
 })();

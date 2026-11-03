@@ -1,0 +1,7 @@
+
+# Dữ liệu đăng nhập (tự tạo khi chạy lần đầu)
+data/users.json
+data/login_attempts.json
+data/rate_limits.json
+data/password_resets.json
+data/outbox/

@@ -11,10 +11,22 @@
  * Phản hồi: file CSV tải về trực tiếp (Content-Disposition: attachment)
  */
 
+// Yêu cầu đăng nhập + CSRF (token gửi qua header X-CSRF-Token hoặc trường csrf_token)
+require_once __DIR__ . '/auth.php';
+if (authUser() === null) {
+    http_response_code(401);
+    exit('Bạn chưa đăng nhập.');
+}
+
 // Chỉ nhận POST
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
     http_response_code(405);
     exit('Chỉ hỗ trợ POST.');
+}
+
+if (!csrfIsValid()) {
+    http_response_code(403);
+    exit('Token CSRF không hợp lệ.');
 }
 
 $type     = trim($_POST['type'] ?? 'data');

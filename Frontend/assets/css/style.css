@@ -332,3 +332,213 @@ footer.academic-footer {
   font-size: 0.825rem;
   color: var(--text-muted);
 }
+
+
+/* ==========================================================================
+   GIAO DIỆN V2 — To hơn, đẹp hơn, hiện đại hơn
+   (ghi đè lên phần trên, giữ nguyên tên class nên không cần sửa HTML/JS)
+   ========================================================================== */
+
+:root {
+  --primary: #2745c4;
+  --primary-hover: #1e37a3;
+  --primary-dark: #14246b;
+  --primary-light: #eef2ff;
+  --accent: #6366f1;
+  --border-color: #e3e8f2;
+  --bg-page: #f3f6fc;
+  --radius: 14px;
+  --shadow-sm: 0 2px 6px rgba(20, 36, 107, 0.06);
+  --shadow-md: 0 8px 24px rgba(20, 36, 107, 0.10);
+}
+
+html { font-size: 17px; }               /* tăng cỡ chữ gốc (mặc định 16px) */
+
+body {
+  font-family: "Inter", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+  line-height: 1.6;
+  background:
+    radial-gradient(900px 400px at 100% -10%, #e0e7ff 0%, transparent 60%),
+    var(--bg-page);
+}
+
+/* Khung nội dung rộng hơn */
+.container { max-width: 1500px; padding-left: 1.5rem; padding-right: 1.5rem; }
+.container.py-3 { padding-top: 2rem !important; padding-bottom: 2.5rem !important; }
+
+/* Navbar */
+.academic-navbar {
+  background: linear-gradient(120deg, var(--primary-dark) 0%, var(--primary) 55%, var(--accent) 100%);
+  border-bottom: none;
+  padding: 1.1rem 0;
+  box-shadow: 0 4px 18px rgba(20, 36, 107, 0.25);
+}
+.academic-navbar .navbar-brand { font-size: 1.55rem; font-weight: 700; letter-spacing: -0.3px; }
+.academic-navbar .bi { font-size: 1.8rem !important; }
+
+/* Tabs */
+.academic-tabs {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius) var(--radius) 0 0;
+  padding: 0.6rem 1.25rem 0;
+  box-shadow: var(--shadow-sm);
+  gap: 0.25rem;
+}
+.academic-tabs .nav-link {
+  font-size: 1.05rem;
+  padding: 1rem 1.5rem;
+  border-radius: 10px 10px 0 0;
+}
+.academic-tabs .nav-link.active { background: var(--primary-light); }
+
+/* Card */
+.card-academic {
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 1.75rem;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  overflow: hidden;
+}
+.card-academic:hover { box-shadow: var(--shadow-md); }
+.card-academic .card-header {
+  padding: 1.15rem 1.75rem;
+  font-size: 1.15rem;
+  background: linear-gradient(180deg, #fff 0%, #f8faff 100%);
+}
+.card-academic .card-body { padding: 1.75rem; }
+
+/* Chữ phụ to hơn */
+.small, small { font-size: 0.92rem !important; }
+.fs-3 { font-size: 1.9rem !important; }
+.fs-4 { font-size: 1.5rem !important; }
+h5 { font-size: 1.3rem; }
+h6 { font-size: 1.1rem; }
+
+/* Form */
+.form-control, .form-select, .input-group-text {
+  font-size: 1rem;
+  padding: 0.7rem 1rem;
+  border-radius: 10px;
+  border-color: #d3dbeb;
+}
+.form-control-sm, .form-select-sm, .input-group-sm > .form-control,
+.input-group-sm > .form-select, .input-group-sm > .input-group-text {
+  font-size: 0.95rem;
+  padding: 0.55rem 0.85rem;
+  border-radius: 10px;
+}
+.form-control:focus, .form-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 0.25rem rgba(99, 102, 241, 0.18);
+}
+.form-label { font-weight: 600; margin-bottom: 0.4rem; }
+
+/* Nút */
+.btn {
+  font-size: 1rem;
+  padding: 0.7rem 1.4rem;
+  border-radius: 10px;
+  font-weight: 600;
+  transition: all 0.18s ease;
+}
+.btn-sm { font-size: 0.92rem; padding: 0.5rem 1rem; border-radius: 9px; }
+.btn-lg { font-size: 1.15rem; padding: 0.9rem 1.8rem; }
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+  border: none;
+  box-shadow: 0 4px 12px rgba(39, 69, 196, 0.30);
+}
+.btn-primary:hover, .btn-primary:focus {
+  background: linear-gradient(135deg, var(--primary-hover) 0%, var(--primary) 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(39, 69, 196, 0.35);
+}
+.btn-outline-secondary:hover { transform: translateY(-1px); }
+
+/* Ô thống kê */
+.stat-box {
+  border-radius: var(--radius);
+  padding: 1.6rem 1rem;
+  box-shadow: var(--shadow-sm);
+  background: linear-gradient(180deg, #fff 0%, var(--primary-light) 100%);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.stat-box:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: #c7d2fe; }
+.stat-box .stat-num { font-size: 2.5rem; letter-spacing: -1px; }
+.stat-box .stat-desc { font-size: 0.95rem; }
+
+/* Gợi ý nhanh */
+.quick-pill {
+  font-size: 0.92rem;
+  padding: 0.4rem 0.95rem;
+  border-radius: 999px;
+  margin-right: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Bảng kết quả */
+.results-table-wrapper { border-radius: var(--radius); box-shadow: var(--shadow-sm); }
+.table-academic { font-size: 1rem; }
+.table-academic thead th {
+  background: #eef2ff;
+  color: var(--primary-dark);
+  padding: 1rem 1.1rem;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.table-academic tbody td { padding: 1rem 1.1rem; }
+.table-academic tbody tr:hover { background-color: #f5f7ff; }
+.prod-thumb { width: 64px; height: 82px; border-radius: 8px; box-shadow: var(--shadow-sm); }
+.rating-stars { font-size: 1rem; }
+.badge { font-size: 0.85rem; padding: 0.45em 0.8em; border-radius: 999px; }
+.badge-stock-in, .badge-stock-out { font-size: 0.85rem; }
+
+/* Lưới ảnh */
+.image-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1.25rem; }
+.image-grid-item {
+  border-radius: 12px;
+  padding: 0.85rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.image-grid-item:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+.image-grid-item img { height: 170px; }
+.image-grid-caption { font-size: 0.88rem; }
+
+/* Lý thuyết */
+.theory-section { border-left-width: 4px; padding-left: 1.25rem; margin-bottom: 2rem; }
+.theory-section h5 { font-size: 1.25rem; }
+.theory-box {
+  border-radius: 12px;
+  padding: 1.35rem;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 1.25rem;
+}
+.theory-box p, .theory-box li { font-size: 1rem; line-height: 1.7; }
+
+/* Code */
+.code-preview { font-size: 0.92rem; padding: 1.25rem; border-radius: 12px; max-height: 480px; }
+
+/* Sơ đồ pipeline (ghi đè style inline cuối trang) */
+.pipeline-step { min-width: 150px; }
+.pipeline-box { padding: 1.1rem 1rem; min-width: 140px; font-size: 0.98rem; border-radius: 14px; }
+
+/* Alert & progress */
+.alert { font-size: 1rem; padding: 1rem 1.25rem; border-radius: 12px; }
+.progress { height: 1.1rem; border-radius: 999px; }
+
+/* Footer */
+footer.academic-footer { font-size: 0.95rem; padding: 1.75rem 0; }
+
+/* Màn hình nhỏ: giảm bớt để không tràn */
+@media (max-width: 991.98px) {
+  html { font-size: 16px; }
+  .container { padding-left: 1rem; padding-right: 1rem; }
+  .card-academic .card-body { padding: 1.25rem; }
+  .academic-tabs .nav-link { padding: 0.8rem 1rem; font-size: 1rem; }
+  .stat-box .stat-num { font-size: 2rem; }
+}
+
+/* Khu vực người dùng trên thanh điều hướng */
+.academic-navbar .user-box .bi { font-size: 1.15rem !important; }
+.academic-navbar .user-box .btn { padding: 0.45rem 1rem; }

@@ -1,8 +1,19 @@
+<?php
+// Yêu cầu đăng nhập: chưa có phiên thì chuyển về trang đăng nhập
+require_once __DIR__ . '/../backend/auth.php';
+$authUser = authUser();
+if ($authUser === null) {
+    header('Location: login.php');
+    exit;
+}
+$csrf = csrfToken();
+?>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="<?= htmlspecialchars($csrf, ENT_QUOTES) ?>">
   <title>Hệ Thống Web Crawler & Khai Thác Dữ Liệu | Đồ Án Môn Học</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
@@ -16,7 +27,17 @@
     <div class="d-flex align-items-center gap-2">
       <i class="bi bi-diagram-3-fill text-white fs-5"></i>
       <span class="navbar-brand mb-0">Hệ Thống Web Crawler</span>
-      
+    </div>
+
+    <div class="d-flex align-items-center gap-3 user-box">
+      <span class="text-white">
+        <i class="bi bi-person-circle me-1"></i>
+        <strong><?= htmlspecialchars($authUser['username'], ENT_QUOTES) ?></strong>
+        <span class="badge <?= $authUser['role'] === 'admin' ? 'bg-warning text-dark' : 'bg-light text-dark' ?> ms-1"><?= htmlspecialchars($authUser['role'], ENT_QUOTES) ?></span>
+      </span>
+      <button type="button" id="logout-btn" class="btn btn-sm btn-outline-light">
+        <i class="bi bi-box-arrow-right me-1"></i> Đăng xuất
+      </button>
     </div>
 
   </div>

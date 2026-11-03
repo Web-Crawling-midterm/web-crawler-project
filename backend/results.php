@@ -8,6 +8,10 @@
 
 header('Content-Type: application/json; charset=utf-8');
 
+// Yêu cầu đăng nhập
+require_once __DIR__ . '/auth.php';
+$currentUser = requireLogin();
+
 // ==================================================
 // HÀM TIỆN ÍCH: Chuẩn hóa URL tương đối → tuyệt đối
 // Phải khai báo TRƯỚC khi gọi.
@@ -85,6 +89,15 @@ if (!is_array($data)) {
     exit;
 }
 
+// Phân quyền: user thường chỉ thấy dữ liệu do mình thu thập.
+// Bản ghi cũ chưa có 'owner' được coi là của admin. Giữ nguyên khóa (index)
+// để thao tác xóa vẫn trỏ đúng bản ghi trong file gốc.
+if ($currentUser['role'] !== 'admin') {
+    $data = array_filter($data, function ($rec) use ($currentUser) {
+        return ($rec['owner'] ?? 'admin') === $currentUser['username'];
+    });
+}
+
 // ==================================================
 // TỔNG HỢP ITEMS TỪ TẤT CẢ BẢN GHI
 // ==================================================
@@ -159,6 +172,7 @@ foreach ($data as $i => $rec) {
         'id'             => $i + 1,
         'index'          => $i,
         'url'            => $rec['url'] ?? '',
+        'owner'          => $rec['owner'] ?? 'admin',
         'saved_at'       => $rec['saved_at'] ?? '',
         'title'          => $rec['title'] ?? '',
         'total_links'    => isset($rec['total_links'])    ? (int) $rec['total_links']    : (is_array($rec['links']    ?? null) ? count($rec['links'])    : 0),
@@ -173,6 +187,7 @@ foreach ($data as $i => $rec) {
 echo json_encode([
     'success'       => true,
     'total_records' => count($data),
+    'user'          => $currentUser,
     'records'       => array_reverse($recordsSummary),
     'items'         => $unique,
 ], JSON_UNESCAPED_UNICODE);

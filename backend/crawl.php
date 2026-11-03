@@ -10,6 +10,10 @@ if (!function_exists('curl_init')) {
 // Trả kết quả dưới dạng JSON
 header('Content-Type: application/json; charset=utf-8');
 
+// Yêu cầu đăng nhập (và token CSRF với POST)
+require_once __DIR__ . '/auth.php';
+requireLogin();
+
 // Hàm trả lỗi JSON và dừng chương trình
 function sendError($statusCode, $message, $extra = [])
 {

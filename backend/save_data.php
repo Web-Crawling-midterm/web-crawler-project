@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/auth.php';
+
 /**
  * Hàm lưu dữ liệu crawl vào file data/crawl_data.json
  *
@@ -96,6 +98,7 @@ function saveCrawlData($url, $html, $extra = [])
     // 8. Tạo bản ghi mới
     $newRecord = [
         'url' => $url,
+        'owner' => (authUser()['username'] ?? 'admin'),
         'saved_at' => date('Y-m-d H:i:s'),
         'title' => $extra['title'] ?? null,
         'total_links' => isset($extra['total_links']) ? (int) $extra['total_links'] : null,
@@ -181,6 +184,12 @@ function deleteCrawlRecord($recordId)
         return ['success' => false, 'status_code' => 404, 'message' => 'Không tìm thấy bản ghi cần xóa.'];
     }
 
+    // Phân quyền: chỉ admin hoặc chủ sở hữu mới được xóa (bản ghi cũ không có owner = của admin)
+    $me = authUser();
+    if ($me['role'] !== 'admin' && ($records[$idx]['owner'] ?? 'admin') !== $me['username']) {
+        return ['success' => false, 'status_code' => 403, 'message' => 'Bạn không có quyền xóa bản ghi này.'];
+    }
+
     array_splice($records, $idx, 1);
     file_put_contents($filePath, json_encode($records, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT), LOCK_EX);
 
@@ -193,10 +202,22 @@ function deleteCrawlRecord($recordId)
 function clearAllCrawlRecords()
 {
     $filePath = __DIR__ . '/../data/crawl_data.json';
+    $me = authUser();
+
     if (file_exists($filePath)) {
-        file_put_contents($filePath, json_encode([], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT), LOCK_EX);
+        if ($me['role'] === 'admin') {
+            $keep = [];                       // admin xóa tất cả
+        } else {
+            $records = json_decode((string) file_get_contents($filePath), true);
+            $keep = array_values(array_filter(is_array($records) ? $records : [], function ($r) use ($me) {
+                return ($r['owner'] ?? 'admin') !== $me['username'];   // user chỉ xóa dữ liệu của mình
+            }));
+        }
+        file_put_contents($filePath, json_encode($keep, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT), LOCK_EX);
     }
-    return ['success' => true, 'status_code' => 200, 'message' => 'Đã xóa toàn bộ lịch sử dữ liệu crawl.'];
+
+    $msg = $me['role'] === 'admin' ? 'Đã xóa toàn bộ lịch sử dữ liệu crawl.' : 'Đã xóa toàn bộ lịch sử của bạn.';
+    return ['success' => true, 'status_code' => 200, 'message' => $msg];
 }
 
 /**
@@ -214,7 +235,8 @@ function saveSpecificData($type, $items, $sourceUrl)
         return ['success' => false, 'status_code' => 400, 'message' => 'Loại dữ liệu cụ thể không hợp lệ.'];
     }
 
-    $fileName = 'data/' . $type . '_export.json';
+    $owner = preg_replace('/[^A-Za-z0-9_.-]/', '', authUser()['username'] ?? 'guest');
+    $fileName = 'data/' . $type . '_export_' . $owner . '.json';
     $saveData = [
         'source_url' => $sourceUrl,
         'exported_at' => date('Y-m-d H:i:s'),
@@ -223,7 +245,7 @@ function saveSpecificData($type, $items, $sourceUrl)
         'items' => $items
     ];
 
-    $result = file_put_contents($dataDir . '/' . $type . '_export.json', json_encode($saveData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT), LOCK_EX);
+    $result = file_put_contents($dataDir . '/' . $type . '_export_' . $owner . '.json', json_encode($saveData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT), LOCK_EX);
     if ($result === false) {
         return ['success' => false, 'status_code' => 500, 'message' => 'Không thể lưu file dữ liệu cụ thể.'];
     }
@@ -239,6 +261,9 @@ function saveSpecificData($type, $items, $sourceUrl)
 // Xử lý trực tiếp khi được gọi qua HTTP API
 if (realpath($_SERVER['SCRIPT_FILENAME'] ?? '') === realpath(__FILE__)) {
     header('Content-Type: application/json; charset=utf-8');
+
+    // Yêu cầu đăng nhập + CSRF
+    requireLogin();
 
     // Chỉ nhận yêu cầu POST
     if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {

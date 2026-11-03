@@ -1,4 +1,4 @@
 <?php
-// Tự động chuyển hướng đến giao diện chính Frontend
-header('Location: Frontend/index.php');
+// Mở trang chủ giới thiệu (có nút Đăng nhập ở góc trên bên phải)
+header('Location: Frontend/home.php');
 exit;
