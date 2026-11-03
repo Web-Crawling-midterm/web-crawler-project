@@ -55,6 +55,7 @@ if (trim($html) === '') {
 // 4. CHUẨN HÓA URL
 // ==================================================
 
+if (!function_exists('resolveUrl')) {
 function resolveUrl($url, $baseUrl)
 {
     $url = trim($url);
@@ -159,11 +160,13 @@ function resolveUrl($url, $baseUrl)
 
     return $origin . $fullPath . $query . $fragment;
 }
+}
 
 // ==================================================
 // 5. LẤY URL ẢNH THẬT
 // ==================================================
 
+if (!function_exists('getImageUrl')) {
 function getImageUrl(DOMElement $node, $baseUrl)
 {
     // Ưu tiên thuộc tính có thể chứa ảnh lazy loading
@@ -217,6 +220,7 @@ function getImageUrl(DOMElement $node, $baseUrl)
     }
 
     return '';
+}
 }
 
 // ==================================================
@@ -352,6 +356,23 @@ foreach ($xpath->query('//a[@href]') as $node) {
     $text = trim(
         preg_replace('/\s+/u', ' ', $node->textContent)
     );
+
+    // Fallback thông minh nếu thẻ <a> không có text trực tiếp (thường là link ảnh thumbnail hoặc icon)
+    if ($text === '') {
+        $text = trim($node->getAttribute('title') ?: $node->getAttribute('aria-label'));
+    }
+    if ($text === '') {
+        $altNode = $xpath->query('.//img/@alt', $node)->item(0);
+        if ($altNode) {
+            $text = trim($altNode->nodeValue);
+        }
+    }
+    if ($text === '') {
+        $imgTitleNode = $xpath->query('.//img/@title', $node)->item(0);
+        if ($imgTitleNode) {
+            $text = trim($imgTitleNode->nodeValue);
+        }
+    }
 
     $resolvedUrl = resolveUrl($href, $baseUrl);
 
@@ -587,15 +608,30 @@ foreach ($productCards as $card) {
 $articles = [];
 $seenArticleUrls = [];
 
-// Tìm các thẻ đại diện cho bài viết blog phổ biến
+// Lấy ngày xuất bản từ meta tag của toàn trang (nếu có)
+$pagePubDate = '';
+$pubMetaNodes = $xpath->query('//meta[@property="article:published_time" or @name="pubdate" or @itemprop="datePublished" or @property="og:updated_time"]/@content');
+if ($pubMetaNodes->length > 0) {
+    $pagePubDate = trim($pubMetaNodes->item(0)->nodeValue);
+}
+
+// Lấy ngày hiện tại trên header của báo (ví dụ VnExpress: <span class="time-now">Chủ nhật, 1/11/2026</span>)
+$pageTimeNow = '';
+$timeNowNode = $xpath->query('//*[contains(@class, "time-now") or contains(@class, "current-time") or contains(@class, "header-date")]')->item(0);
+if ($timeNowNode) {
+    $pageTimeNow = trim(preg_replace('/\s+/u', ' ', $timeNowNode->textContent));
+}
+
+// Tìm các thẻ đại diện cho bài viết blog / báo chí phổ biến (hỗ trợ VnExpress, Báo Mới, Dân Trí, Tuổi Trẻ...)
 $articleContainers = $xpath->query(
     "//article[not(contains(@class, 'product_pod'))] | " .
-    "//*[contains(@class, 'post-item') or contains(@class, 'blog-post') or contains(@class, 'entry-card') or contains(@class, 'item-news') or contains(@class, 'article-card') or contains(@class, 'story-item')]"
+    "//*[contains(@class, 'bm-card') and not(contains(@class, 'bm-card-header')) and not(contains(@class, 'bm-card-content')) and not(contains(@class, 'bm-card-image'))] | " .
+    "//*[contains(@class, 'item-news') or contains(@class, 'post-item') or contains(@class, 'blog-post') or contains(@class, 'entry-card') or contains(@class, 'article-card') or contains(@class, 'story-item') or contains(@class, 'news-item')]"
 );
 
-// Nếu không tìm thấy bằng class chuyên biệt, quét các thẻ <article> thông thường hoặc cấu trúc h2/h3 có link bài
+// Nếu không tìm thấy, quét rộng hơn các container bài
 if ($articleContainers->length === 0) {
-    $articleContainers = $xpath->query("//div[contains(@class, 'post') or contains(@class, 'article') or contains(@class, 'entry')]");
+    $articleContainers = $xpath->query("//div[contains(@class, 'post') or contains(@class, 'article') or contains(@class, 'story') or contains(@class, 'entry') or contains(@class, 'card')]");
 }
 
 foreach ($articleContainers as $container) {
@@ -604,16 +640,22 @@ foreach ($articleContainers as $container) {
     }
 
     // 1. Tiêu đề và link bài viết
-    $aTitleNode = $xpath->query('.//h1//a | .//h2//a | .//h3//a | .//h4//a | .//*[contains(@class, "title")]//a | .//a[contains(@class, "title")]', $container)->item(0);
+    $aTitleNode = $xpath->query(
+        './/h1//a | .//h2//a | .//h3//a | .//h4//a | ' .
+        './/*[contains(@class, "title-news")]//a | .//*[contains(@class, "title")]//a | .//a[contains(@class, "title")] | ' .
+        './/h3[contains(@class, "title-news")]/a | .//h2[contains(@class, "title-news")]/a',
+        $container
+    )->item(0);
+
     $artTitle = '';
     $artUrl = '';
 
     if ($aTitleNode instanceof DOMElement) {
-        $artTitle = trim(preg_replace('/\s+/u', ' ', $aTitleNode->textContent));
+        $artTitle = trim(preg_replace('/\s+/u', ' ', $aTitleNode->getAttribute('title') ?: $aTitleNode->textContent));
         $artUrl = resolveUrl($aTitleNode->getAttribute('href'), $baseUrl);
     } else {
-        // Thử tìm thẻ h1/h2/h3 trực tiếp nếu không lồng thẻ <a>
-        $hNode = $xpath->query('.//h1 | .//h2 | .//h3 | .//h4', $container)->item(0);
+        // Thử tìm thẻ heading trực tiếp
+        $hNode = $xpath->query('.//h1 | .//h2 | .//h3 | .//h4 | .//*[contains(@class, "title-news")]', $container)->item(0);
         if ($hNode) {
             $artTitle = trim(preg_replace('/\s+/u', ' ', $hNode->textContent));
         }
@@ -623,34 +665,105 @@ foreach ($articleContainers as $container) {
         }
     }
 
-    if ($artTitle === '' || $artUrl === '' || isset($seenArticleUrls[$artUrl])) {
+    // Bỏ qua nếu không có tiêu đề hoặc link, hoặc link là javascript/anchor rỗng
+    if ($artTitle === '' || $artUrl === '' || isset($seenArticleUrls[$artUrl]) || preg_match('/^(javascript:|#)/i', $artUrl)) {
         continue;
     }
 
     $seenArticleUrls[$artUrl] = true;
 
-    // 2. Ngày đăng bài viết
+    // 2. Ngày đăng bài viết (Thuật toán đa lớp)
     $artDate = '';
+    
+    // Lớp 1: Tìm trong thẻ <time>
     $timeNode = $xpath->query('.//time', $container)->item(0);
     if ($timeNode instanceof DOMElement) {
-        $artDate = trim($timeNode->getAttribute('datetime') ?: $timeNode->textContent);
-    } else {
-        $dateNode = $xpath->query('.//*[contains(@class, "date") or contains(@class, "time") or contains(@class, "published")]', $container)->item(0);
+        $dt = trim($timeNode->getAttribute('datetime'));
+        if ($dt !== '') {
+            $parsedTs = strtotime($dt);
+            $artDate = $parsedTs ? date('d/m/Y H:i', $parsedTs) : $dt;
+        } else {
+            $artDate = trim($timeNode->textContent);
+        }
+    }
+    
+    // Lớp 2: Tìm trong class date, time, published, time-public
+    if ($artDate === '') {
+        $dateNode = $xpath->query('.//*[contains(@class, "date") or contains(@class, "time-public") or contains(@class, "time") or contains(@class, "published") or @itemprop="datePublished"]', $container)->item(0);
         if ($dateNode) {
-            $artDate = trim(preg_replace('/\s+/u', ' ', $dateNode->textContent));
+            $candidateDate = trim(preg_replace('/\s+/u', ' ', $dateNode->getAttribute('datetime') ?: ($dateNode->getAttribute('title') ?: $dateNode->textContent)));
+            if ($candidateDate !== '') {
+                $artDate = $candidateDate;
+            }
         }
     }
 
-    // 3. Tác giả
-    $artAuthor = '';
-    $authorNode = $xpath->query('.//*[@rel="author"] | .//*[contains(@class, "author") or contains(@class, "byline")]', $container)->item(0);
-    if ($authorNode) {
-        $artAuthor = trim(preg_replace('/\s+/u', ' ', $authorNode->textContent));
+    // Lớp 3: Tìm thuộc tính data-pubdate hoặc timestamp trong container
+    if ($artDate === '') {
+        $dataDate = $container->getAttribute('data-pubdate') ?: $container->getAttribute('data-time');
+        if ($dataDate !== '') {
+            $artDate = $dataDate;
+        }
     }
 
-    // 4. Đoạn tóm tắt (Excerpt)
+    // Lớp 4: Lấy ảnh bìa trước để xem URL ảnh có chứa ngày tháng không (đặc trưng của VnExpress / WordPress: /2026/11/01/...)
+    $artImage = '';
+    
+    // Hỗ trợ cả thẻ <picture><source srcset="..."> của VnExpress
+    $sourceNode = $xpath->query('.//picture/source[@srcset]', $container)->item(0);
+    if ($sourceNode instanceof DOMElement) {
+        $srcset = trim($sourceNode->getAttribute('srcset'));
+        $srcParts = preg_split('/\s+/', $srcset);
+        if (!empty($srcParts[0])) {
+            $artImage = resolveUrl($srcParts[0], $baseUrl);
+        }
+    }
+
+    if ($artImage === '') {
+        $artImgNode = $xpath->query('.//img', $container)->item(0);
+        if ($artImgNode instanceof DOMElement) {
+            $artImage = getImageUrl($artImgNode, $baseUrl);
+        }
+    }
+
+    // Nếu vẫn chưa có ngày, thử trích xuất từ URL ảnh (VD: /2026/11/01/ hoặc /2026/11/)
+    if ($artDate === '' && $artImage !== '') {
+        if (preg_match('~/(\d{4})/(\d{1,2})/(\d{1,2})/~', $artImage, $m)) {
+            $artDate = sprintf('%02d/%02d/%04d', $m[3], $m[2], $m[1]);
+        } elseif (preg_match('~/(\d{4})/(\d{1,2})/~', $artImage, $m)) {
+            $artDate = sprintf('%02d/%04d', $m[2], $m[1]);
+        }
+    }
+
+    // Lớp 5: Fallback sang ngày meta bài viết hoặc ngày hiển thị trên trang báo
+    if ($artDate === '') {
+        if ($pageTimeNow !== '') {
+            $artDate = $pageTimeNow;
+        } elseif ($pagePubDate !== '') {
+            $artDate = $pagePubDate;
+        } else {
+            $artDate = 'Không rõ ngày đăng';
+        }
+    }
+
+    // 3. Tác giả hoặc Nguồn xuất bản (Báo Mới, VnExpress...)
+    $artAuthor = '';
+    $authorNode = $xpath->query(
+        './/*[contains(@class, "source") or contains(@class, "author") or contains(@class, "byline") or contains(@class, "cat") or contains(@class, "thumb-author") or @rel="author"]',
+        $container
+    )->item(0);
+    if ($authorNode) {
+        $artAuthor = trim(preg_replace('/\s+/u', ' ', $authorNode->getAttribute('title') ?: ($authorNode->getAttribute('aria-label') ?: $authorNode->textContent)));
+    }
+
+    // 4. Đoạn tóm tắt (Excerpt / Description / Lead)
     $artExcerpt = '';
-    $excerptNode = $xpath->query('.//*[contains(@class, "excerpt") or contains(@class, "summary") or contains(@class, "desc") or contains(@class, "snippet")] | .//p', $container)->item(0);
+    $excerptNode = $xpath->query(
+        './/*[contains(@class, "description")] | .//*[contains(@class, "lead")] | ' .
+        './/*[contains(@class, "excerpt") or contains(@class, "summary") or contains(@class, "snippet")] | .//p',
+        $container
+    )->item(0);
+
     if ($excerptNode) {
         $artExcerpt = trim(preg_replace('/\s+/u', ' ', $excerptNode->textContent));
         if (mb_strlen($artExcerpt, 'UTF-8') > 300) {
@@ -658,35 +771,36 @@ foreach ($articleContainers as $container) {
         }
     }
 
-    // 5. Ảnh bài viết
-    $artImage = '';
-    $artImgNode = $xpath->query('.//img', $container)->item(0);
-    if ($artImgNode instanceof DOMElement) {
-        $artImage = getImageUrl($artImgNode, $baseUrl);
-    }
-
     $articles[] = [
         'title' => $artTitle,
         'url' => $artUrl,
-        'author' => $artAuthor ?: ($metaAuthor ?: 'Không rõ tác giả'),
-        'date' => $artDate ?: 'Không rõ ngày đăng',
-        'excerpt' => $artExcerpt,
+        'author' => $artAuthor ?: ($metaAuthor ?: 'Ban biên tập'),
+        'date' => $artDate,
+        'excerpt' => $artExcerpt ?: '(Xem chi tiết bài viết)',
         'image_url' => $artImage ?: $ogImage
     ];
 }
 
-// Nếu trang hiện tại chính là một bài viết đơn lẻ (Single Post / Detail Page), trích xuất bài viết đó
+// Nếu trang hiện tại chính là một bài viết đơn lẻ (Single Post / Detail Page), trích xuất chi tiết
 if (empty($articles) && ($metaDescription || $ogTitle || count($headings) > 0)) {
     $mainH1 = $xpath->query('//h1')->item(0);
     if ($mainH1) {
         $singleTitle = trim(preg_replace('/\s+/u', ' ', $mainH1->textContent));
         $singleExcerpt = $metaDescription ?: ($ogDescription ?: '');
+        
+        // Thử tìm ngày trong bài đơn
+        $singleDate = $pagePubDate ?: ($pageTimeNow ?: date('d/m/Y'));
+        $singleDateNode = $xpath->query('//*[contains(@class, "date") or @class="time-header"]')->item(0);
+        if ($singleDateNode) {
+            $singleDate = trim(preg_replace('/\s+/u', ' ', $singleDateNode->textContent));
+        }
+
         $articles[] = [
             'title' => $singleTitle,
             'url' => $baseUrl,
-            'author' => $metaAuthor ?: 'Tác giả bài viết',
-            'date' => date('Y-m-d'),
-            'excerpt' => $singleExcerpt,
+            'author' => $metaAuthor ?: 'Ban biên tập',
+            'date' => $singleDate,
+            'excerpt' => $singleExcerpt ?: '(Nội dung bài viết)',
             'image_url' => $ogImage
         ];
     }

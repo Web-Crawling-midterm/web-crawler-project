@@ -281,7 +281,9 @@ function checkRobots($url, $userAgent = '*')
 }
 
 // Xử lý trực tiếp khi được gọi qua HTTP API
-if (realpath($_SERVER['SCRIPT_FILENAME'] ?? '') === realpath(__FILE__)) {
+$scriptFilename = realpath($_SERVER['SCRIPT_FILENAME'] ?? '') ?: '';
+$currentFile = realpath(__FILE__) ?: '';
+if ($scriptFilename !== '' && strcasecmp($scriptFilename, $currentFile) === 0) {
     header('Content-Type: application/json; charset=utf-8');
 
     // Hỗ trợ cả POST và GET

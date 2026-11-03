@@ -112,7 +112,9 @@
   // Robots Tab
   const robotsForm = $("robots-form");
   const robotsTestUrl = $("robots-test-url");
-  const robotsUserAgent = $("robots-user-agent");
+  const robotsUserAgentSelect = $("robots-user-agent-select");
+  const robotsUserAgentCustom = $("robots-user-agent-custom");
+  const userAgentHint = $("user-agent-hint");
   const btnCheckRobots = $("btn-check-robots");
   const robotsSpinner = $("robots-spinner");
   const robotsIcon = $("robots-icon");
@@ -121,6 +123,8 @@
   const robotsStatusBadge = $("robots-status-badge");
   const robotsStatusDesc = $("robots-status-desc");
   const robotsStatusMeta = $("robots-status-meta");
+  const robotsActionArea = $("robots-action-area");
+  const btnUseUrlForCrawl = $("btn-use-url-for-crawl");
 
   // Saved Data Tab
   const savedSessionsCount = $("saved-sessions-count");
@@ -909,6 +913,12 @@
 
       showAllResults(data, elapsed);
 
+      // Hiển thị thời gian crawl trên toolbar
+      const timerEl = $("export-timer");
+      const timeDisplay = $("crawl-time-display");
+      if (timerEl) timerEl.classList.remove("d-none");
+      if (timeDisplay) timeDisplay.textContent = elapsed.toFixed(1) + "s";
+
       let msg = "Thu thập thành công " + (data.pages_crawled || 1) + " trang: ";
       const parts = [];
       if (data.articles.length > 0) parts.push(data.articles.length + " bài viết blog");
@@ -930,23 +940,44 @@
 
   // ===== Kiểm tra Robots.txt (Tab 2) =====
   async function handleRobotsCheck(event) {
-    if (event) event.preventDefault();
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
 
-    const targetUrl = robotsTestUrl.value.trim();
-    const userAgent = robotsUserAgent.value.trim() || "*";
+    let targetUrl = robotsTestUrl ? robotsTestUrl.value.trim() : "";
+    const robotsFeedback = $("robots-url-feedback");
 
-    if (!isValidUrl(targetUrl)) {
-      alert("Vui lòng nhập URL hợp lệ để kiểm tra robots.txt");
+    // Tự động thêm https:// nếu người dùng quên nhập protocol (ví dụ gõ 'vnexpress.net')
+    if (targetUrl && !/^https?:\/\//i.test(targetUrl)) {
+      targetUrl = "https://" + targetUrl;
+      robotsTestUrl.value = targetUrl;
+    }
+
+    if (!targetUrl || !isValidUrl(targetUrl)) {
+      if (robotsTestUrl) robotsTestUrl.classList.add("is-invalid");
+      if (robotsFeedback) robotsFeedback.classList.remove("d-none");
+      if (robotsTestUrl) robotsTestUrl.focus();
       return;
+    }
+
+    if (robotsTestUrl) robotsTestUrl.classList.remove("is-invalid");
+    if (robotsFeedback) robotsFeedback.classList.add("d-none");
+
+    // Lấy User-Agent từ dropdown hoặc ô custom
+    let userAgent = robotsUserAgentSelect ? robotsUserAgentSelect.value : "WebCrawlingStudentProject/1.0";
+    if (userAgent === "custom") {
+      userAgent = (robotsUserAgentCustom ? robotsUserAgentCustom.value.trim() : "") || "WebCrawlingStudentProject/1.0";
     }
 
     btnCheckRobots.disabled = true;
     robotsSpinner.classList.remove("d-none");
     robotsIcon.classList.add("d-none");
     robotsResultBox.classList.remove("d-none");
+    if (robotsActionArea) robotsActionArea.classList.add("d-none");
     robotsStatusBadge.className = "badge text-bg-secondary";
     robotsStatusBadge.textContent = "ĐANG KIỂM TRA...";
-    robotsStatusDesc.textContent = "Đang gửi yêu cầu tới website nguồn để tải và phân tích robots.txt...";
+    robotsStatusDesc.textContent = "Đang gửi yêu cầu tới website nguồn để tải và phân tích robots.txt theo chuẩn RFC 9309...";
     robotsStatusMeta.innerHTML = "";
 
     try {
@@ -962,15 +993,19 @@
         robotsStatusBadge.className = "badge text-bg-success";
         robotsStatusBadge.textContent = "CHO PHÉP TRUY CẬP (ALLOWED)";
         robotsStatusTitle.textContent = "URL hợp lệ theo Robots.txt";
+        // Hiển thị nút cho phép người dùng chủ động chuyển sang Crawl nếu muốn
+        if (robotsActionArea) robotsActionArea.classList.remove("d-none");
       } else {
         robotsStatusBadge.className = "badge text-bg-danger";
         robotsStatusBadge.textContent = "BỊ CHẶN TRUY CẬP (DISALLOWED)";
         robotsStatusTitle.textContent = "URL bị từ chối truy cập theo Robots.txt";
+        if (robotsActionArea) robotsActionArea.classList.add("d-none");
       }
 
       robotsStatusDesc.textContent = data.message || "";
 
       let metaHtml = "";
+      metaHtml += '<div class="mb-1"><i class="bi bi-robot me-1 text-primary"></i>Danh xưng kiểm thử (User-Agent): <code>' + escapeHtml(userAgent) + '</code></div>';
       if (data.robots_url) {
         metaHtml += '<div><i class="bi bi-link-45deg me-1"></i>Tệp robots.txt nguồn: <a href="' + escapeHtml(data.robots_url) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(data.robots_url) + '</a></div>';
       }
@@ -1208,6 +1243,56 @@
     });
   }
 
+  // ===== Bộ đếm thời gian Crawl =====
+  let crawlStartTime = null;
+
+  /** Bắt đầu đếm giờ khi crawl bắt đầu */
+  function startCrawlTimer() {
+    crawlStartTime = Date.now();
+    const timerEl = $("export-timer");
+    const display = $("crawl-time-display");
+    if (timerEl) timerEl.classList.add("d-none");
+    if (display) display.textContent = "0s";
+  }
+
+  /** Dừng và hiển thị thời gian crawl */
+  function stopCrawlTimer() {
+    if (!crawlStartTime) return;
+    const elapsed = ((Date.now() - crawlStartTime) / 1000).toFixed(1);
+    crawlStartTime = null;
+    const timerEl = $("export-timer");
+    const display = $("crawl-time-display");
+    if (timerEl) timerEl.classList.remove("d-none");
+    if (display) display.textContent = elapsed + "s";
+  }
+
+  // Gắn timer vào handleSubmit bằng cách wrap setBusy
+  const _origSetBusy = setBusy;
+  function setBusyWithTimer(busy) {
+    if (busy) startCrawlTimer();
+    else stopCrawlTimer();
+    _origSetBusy(busy);
+  }
+  // Override setBusy (re-assign trong closure)
+  // (Sử dụng trực tiếp ở handleSubmit thông qua startCrawlTimer / stopCrawlTimer)
+
+  // ===== Nút Export CSV / JSON thanh toolbar =====
+  const btnExportCsvMain = $("btn-export-csv");
+  const btnExportJsonMain = $("btn-export-json");
+
+  if (btnExportCsvMain) {
+    btnExportCsvMain.addEventListener("click", () => {
+      const activeType = state.currentView === "raw" ? "articles" : state.currentView;
+      exportSpecificCsv(activeType);
+    });
+  }
+
+  if (btnExportJsonMain) {
+    btnExportJsonMain.addEventListener("click", () => {
+      exportSpecificJson(state.currentView === "raw" ? "all" : state.currentView);
+    });
+  }
+
   // ===== Gán sự kiện (Event Listeners) =====
   form.addEventListener("submit", handleSubmit);
   urlInput.addEventListener("input", () => urlInput.classList.remove("is-invalid"));
@@ -1367,10 +1452,10 @@
     });
   });
 
-  // Xuất file từ menu dropdown và nút chính
-  $("export-json").addEventListener("click", () => exportSpecificJson("all"));
-  $("export-csv").addEventListener("click", () => exportSpecificCsv(state.currentView === "raw" ? "all" : state.currentView));
-  $("btn-copy-html").addEventListener("click", copyRawHtml);
+  // Nút sao chép mã HTML
+  if ($("btn-copy-html")) {
+    $("btn-copy-html").addEventListener("click", copyRawHtml);
+  }
 
   document.querySelectorAll(".export-action").forEach((item) => {
     item.addEventListener("click", (e) => {
@@ -1383,7 +1468,68 @@
   });
 
   // Tab Robots.txt
-  robotsForm.addEventListener("submit", handleRobotsCheck);
+  if (btnCheckRobots) {
+    btnCheckRobots.addEventListener("click", handleRobotsCheck);
+  }
+  if (robotsForm) {
+    robotsForm.addEventListener("submit", handleRobotsCheck);
+  }
+  if (robotsTestUrl) {
+    robotsTestUrl.addEventListener("input", () => {
+      robotsTestUrl.classList.remove("is-invalid");
+      const fb = $("robots-url-feedback");
+      if (fb) fb.classList.add("d-none");
+    });
+    robotsTestUrl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleRobotsCheck(e);
+      }
+    });
+  }
+
+  // Xử lý đổi User-Agent select
+  if (robotsUserAgentSelect) {
+    robotsUserAgentSelect.addEventListener("change", () => {
+      const val = robotsUserAgentSelect.value;
+      if (val === "custom") {
+        if (robotsUserAgentCustom) {
+          robotsUserAgentCustom.classList.remove("d-none");
+          robotsUserAgentCustom.focus();
+        }
+        if (userAgentHint) userAgentHint.innerHTML = '<i class="bi bi-pencil me-1"></i>Nhập tên định danh bot tùy chỉnh của bạn.';
+      } else {
+        if (robotsUserAgentCustom) robotsUserAgentCustom.classList.add("d-none");
+        const hints = {
+          "WebCrawlingStudentProject/1.0": '<i class="bi bi-shield-check text-success me-1"></i>Bot sinh viên minh bạch danh tính, tuân thủ đạo đức RFC 9309.',
+          "*": '<i class="bi bi-globe me-1 text-primary"></i>Kiểm tra quy tắc chung áp dụng cho tất cả các con bot trên Internet.',
+          "Googlebot": '<i class="bi bi-search me-1 text-info"></i>Quy tắc dành riêng cho công cụ tìm kiếm Google Search.',
+          "Bingbot": '<i class="bi bi-search me-1 text-primary"></i>Quy tắc dành riêng cho công cụ tìm kiếm Microsoft Bing.',
+          "GPTBot": '<i class="bi bi-robot me-1 text-warning"></i>Quy tắc dành riêng cho bot thu thập dữ liệu AI của OpenAI.',
+          "ClaudeBot": '<i class="bi bi-cpu me-1 text-danger"></i>Quy tắc dành riêng cho bot thu thập dữ liệu AI của Anthropic.'
+        };
+        if (userAgentHint) userAgentHint.innerHTML = hints[val] || '<i class="bi bi-info-circle me-1"></i>Đang kiểm tra với User-Agent này.';
+      }
+    });
+  }
+
+  // Nút hành động: Chuyển sang Tab 1 để Thu thập Dữ liệu
+  if (btnUseUrlForCrawl) {
+    btnUseUrlForCrawl.addEventListener("click", () => {
+      const checkedUrl = robotsTestUrl.value.trim();
+      if (!checkedUrl) return;
+      urlInput.value = checkedUrl;
+      const triggerEl = document.querySelector('#crawler-tab');
+      if (triggerEl && window.bootstrap) {
+        const tab = new bootstrap.Tab(triggerEl);
+        tab.show();
+      }
+      urlInput.focus();
+      // Cuộn mượt lên form crawl
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  }
+
   document.querySelectorAll(".robots-preset").forEach((btn) => {
     btn.addEventListener("click", () => {
       robotsTestUrl.value = btn.dataset.url;

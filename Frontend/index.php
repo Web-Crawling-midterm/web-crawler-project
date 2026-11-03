@@ -15,12 +15,10 @@
   <div class="container">
     <div class="d-flex align-items-center gap-2">
       <i class="bi bi-diagram-3-fill text-white fs-5"></i>
-      <span class="navbar-brand mb-0">Hệ Thống Web Crawler &amp; Khai Thác Dữ Liệu</span>
-      <span class="academic-badge d-none d-md-inline">Đồ án Sinh viên Năm 3</span>
+      <span class="navbar-brand mb-0">Hệ Thống Web Crawler</span>
+      
     </div>
-    <span class="navbar-text small text-white-50 d-none d-lg-inline">
-      PHP 8 &middot; cURL &middot; DOMDocument &middot; XPath
-    </span>
+
   </div>
 </nav>
 
@@ -130,7 +128,7 @@
               <button type="button" class="quick-pill example-url" data-url="https://books.toscrape.com/">Books to Scrape (Sản phẩm)</button>
               <button type="button" class="quick-pill example-url" data-url="https://vnexpress.net/so-hoa">VnExpress Số Hóa (Blog/Tin tức)</button>
               <button type="button" class="quick-pill example-url" data-url="https://quotes.toscrape.com/">Quotes to Scrape</button>
-              <button type="button" class="quick-pill example-url" data-url="https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/">Trang chứa tệp PDF mẫu (Tệp)</button>
+
             </div>
 
             <!-- Ghi chú cơ chế -->
@@ -246,32 +244,18 @@
               <i class="bi bi-info-circle me-1"></i>Chọn tab để lọc và xem dữ liệu cụ thể tương ứng.
             </div>
 
-            <!-- Các nút Xuất file & Lưu trữ cụ thể -->
-            <div class="d-flex gap-2">
-              <div class="dropdown">
-                <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" id="btn-export-dropdown">
-                  <i class="bi bi-download me-1"></i>Lưu &amp; Xuất dữ liệu cụ thể
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end shadow-sm small">
-                  <li><h6 class="dropdown-header">Xuất toàn bộ</h6></li>
-                  <li><a class="dropdown-item export-action" href="#" data-type="all" data-format="json"><i class="bi bi-filetype-json me-2 text-danger"></i>Toàn bộ dữ liệu (JSON)</a></li>
-                  <li><a class="dropdown-item export-action" href="#" data-type="all" data-format="csv"><i class="bi bi-filetype-csv me-2 text-success"></i>Toàn bộ dữ liệu (CSV)</a></li>
-                  <li><hr class="dropdown-divider"></li>
-                  <li><h6 class="dropdown-header">Xuất dữ liệu cụ thể</h6></li>
-                  <li><a class="dropdown-item export-action" href="#" data-type="articles" data-format="csv"><i class="bi bi-journal-text me-2 text-primary"></i>Chỉ Bài viết Blog (CSV)</a></li>
-                  <li><a class="dropdown-item export-action" href="#" data-type="headings" data-format="csv"><i class="bi bi-type-h1 me-2 text-warning"></i>Chỉ Cây Tiêu đề H1-H6 (CSV)</a></li>
-                  <li><a class="dropdown-item export-action" href="#" data-type="files" data-format="csv"><i class="bi bi-file-earmark-zip me-2 text-info"></i>Chỉ Danh sách Tệp tin (CSV)</a></li>
-                  <li><a class="dropdown-item export-action" href="#" data-type="links" data-format="csv"><i class="bi bi-link-45deg me-2 text-secondary"></i>Chỉ Danh sách Liên kết (CSV)</a></li>
-                  <li><a class="dropdown-item export-action" href="#" data-type="images" data-format="csv"><i class="bi bi-images me-2 text-danger"></i>Chỉ Danh sách Hình ảnh (CSV)</a></li>
-                  <li><a class="dropdown-item export-action" href="#" data-type="products" data-format="csv"><i class="bi bi-basket me-2 text-success"></i>Chỉ Sản phẩm Books (CSV)</a></li>
-                </ul>
+            <!-- Nhóm nút Export -->
+            <div class="d-flex flex-wrap gap-2 align-items-center" id="export-toolbar">
+              <span class="small text-muted me-1"><i class="bi bi-download me-1"></i>Xuất dữ liệu:</span>
+              <button type="button" class="btn btn-outline-success btn-sm" id="btn-export-csv" title="Tải về file CSV (mở bằng Excel)">
+                <i class="bi bi-file-earmark-spreadsheet me-1"></i>CSV
+              </button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-export-json" title="Sao chép JSON ra clipboard">
+                <i class="bi bi-filetype-json me-1"></i>JSON
+              </button>
+              <div id="export-timer" class="small text-muted d-none ms-2">
+                <i class="bi bi-stopwatch me-1"></i><span id="crawl-time-display">0s</span>
               </div>
-              <button type="button" class="btn btn-outline-secondary btn-sm" id="export-json" title="Xuất định dạng JSON chuẩn">
-                <i class="bi bi-filetype-json me-1 text-danger"></i>JSON
-              </button>
-              <button type="button" class="btn btn-outline-secondary btn-sm" id="export-csv" title="Xuất CSV hỗ trợ tiếng Việt UTF-8">
-                <i class="bi bi-filetype-csv me-1 text-success"></i>CSV
-              </button>
             </div>
           </div>
 
@@ -543,18 +527,41 @@
             Nhập bất kỳ URL nào để kiểm tra xem robot crawler có được phép truy cập theo quy tắc <code>robots.txt</code> của website nguồn hay không.
           </p>
 
-          <form id="robots-form" class="row g-3 align-items-end mb-3">
-            <div class="col-12 col-md-6 col-lg-7">
+          <form id="robots-form" action="javascript:void(0);" onsubmit="event.preventDefault(); return false;" class="row g-3 align-items-start mb-3">
+            <div class="col-12 col-md-6 col-lg-6">
               <label for="robots-test-url" class="form-label fw-semibold small">URL hoặc Tên miền cần kiểm tra:</label>
-              <input type="url" class="form-control" id="robots-test-url"
-                     placeholder="https://books.toscrape.com/catalogue/category/books/travel_2/index.html" required>
+              <div class="input-group">
+                <span class="input-group-text bg-light"><i class="bi bi-link-45deg"></i></span>
+                <input type="text" class="form-control" id="robots-test-url"
+                       placeholder="https://vnexpress.net/thoi-su hoặc https://baomoi.com/..." required autocomplete="off">
+              </div>
+              <div class="invalid-feedback d-none" id="robots-url-feedback">Vui lòng nhập URL website hợp lệ cần kiểm tra (ví dụ: https://vnexpress.net/...).</div>
+              <div class="form-text small text-muted">Nhập đường dẫn trang web muốn kiểm tra quy tắc truy cập.</div>
             </div>
-            <div class="col-8 col-md-4 col-lg-3">
-              <label for="robots-user-agent" class="form-label fw-semibold small">User-Agent kiểm thử:</label>
-              <input type="text" class="form-control" id="robots-user-agent" value="WebCrawlingStudentProject/1.0">
+
+            <div class="col-12 col-md-4 col-lg-4">
+              <label for="robots-user-agent-select" class="form-label fw-semibold small">
+                User-Agent kiểm thử:
+                <i class="bi bi-info-circle ms-1 text-primary" title="Mỗi website có thể áp dụng luật riêng cho từng bot theo chuẩn RFC 9309."></i>
+              </label>
+              <select class="form-select" id="robots-user-agent-select">
+                <option value="WebCrawlingStudentProject/1.0" selected>🎓 WebCrawlingStudentProject/1.0 (Bot Đồ Án - Mặc định)</option>
+                <option value="*">🌐 Tất cả Bot (* - Wildcard toàn cục)</option>
+                <option value="Googlebot">🔍 Googlebot (Công cụ tìm kiếm Google)</option>
+                <option value="Bingbot">🔎 Bingbot (Microsoft Bing)</option>
+                <option value="GPTBot">🤖 GPTBot (OpenAI / ChatGPT)</option>
+                <option value="ClaudeBot">🧠 ClaudeBot (Anthropic AI)</option>
+                <option value="custom">✍️ Tùy chỉnh danh xưng bot khác...</option>
+              </select>
+              <div class="form-text small text-muted" id="user-agent-hint">
+                <i class="bi bi-shield-check text-success me-1"></i>Bot sinh viên minh bạch danh tính, tuân thủ đạo đức.
+              </div>
+              <!-- Ô input nhập custom nếu chọn tùy chỉnh -->
+              <input type="text" class="form-control form-control-sm mt-1 d-none" id="robots-user-agent-custom" placeholder="Nhập tên User-Agent tùy chỉnh...">
             </div>
-            <div class="col-4 col-md-2 col-lg-2">
-              <button type="submit" class="btn btn-primary w-100" id="btn-check-robots">
+
+            <div class="col-12 col-md-2 col-lg-2 mt-auto">
+              <button type="button" class="btn btn-primary w-100" id="btn-check-robots">
                 <span class="spinner-border spinner-border-sm me-1 d-none" id="robots-spinner"></span>
                 <i class="bi bi-search me-1" id="robots-icon"></i>Kiểm tra
               </button>
@@ -562,10 +569,11 @@
           </form>
 
           <!-- Ví dụ test nhanh -->
-          <div class="small text-muted mb-3">
-            Thử nghiệm nhanh:
+          <div class="small text-muted mb-3 d-flex flex-wrap align-items-center gap-1">
+            <span>Thử nghiệm nhanh:</span>
             <button type="button" class="quick-pill robots-preset" data-url="https://books.toscrape.com/catalogue/category/books_1/index.html">Books to Scrape (404 - Cho phép)</button>
             <button type="button" class="quick-pill robots-preset" data-url="https://vnexpress.net/thoi-su">VnExpress Thời sự (Allow: /)</button>
+            <button type="button" class="quick-pill robots-preset" data-url="https://baomoi.com/">Báo Mới (Allow: /)</button>
             <button type="button" class="quick-pill robots-preset" data-url="https://google.com/search">Google Search (Disallow: /search)</button>
           </div>
 
@@ -577,6 +585,13 @@
             </div>
             <div id="robots-status-desc" class="mb-2 small"></div>
             <div class="small text-muted" id="robots-status-meta"></div>
+            <!-- Nút hành động trực tiếp nếu được phép -->
+            <div id="robots-action-area" class="mt-3 pt-2 border-top d-none">
+              <button type="button" class="btn btn-sm btn-success" id="btn-use-url-for-crawl">
+                <i class="bi bi-play-circle me-1"></i>Sử dụng URL này để Thu thập Dữ liệu (Chuyển sang Tab 1)
+              </button>
+              <span class="small text-muted ms-2">URL đã được cấp phép, bạn có thể crawl an toàn.</span>
+            </div>
           </div>
         </div>
       </section>
@@ -846,6 +861,98 @@
           </div>
         </div>
 
+        <!-- Mục 4: Sơ đồ Kiến trúc Pipeline (MỚI - Thêm để đạt điểm cao) -->
+        <div class="col-12">
+          <div class="card card-academic">
+            <div class="card-header bg-white">
+              <span class="text-primary"><i class="bi bi-diagram-3 me-2"></i>4. Sơ đồ Kiến trúc Pipeline & Luồng Xử lý (Architecture Diagram)</span>
+              <span class="badge text-bg-light border text-muted small fw-normal">Full-Stack Web Crawling System</span>
+            </div>
+            <div class="card-body">
+              <div class="theory-box mb-3">
+                <h6><i class="bi bi-arrow-right-circle me-2 text-primary"></i>A. Luồng xử lý 5 bước của hệ thống</h6>
+                <p class="small text-muted mb-2">Mỗi lần người dùng nhấn "Bắt đầu Crawl", hệ thống thực thi pipeline gồm 5 giai đoạn tuần tự độc lập:</p>
+                <!-- Flowchart bằng HTML/CSS thuần không cần thư viện ngoài -->
+                <div class="d-flex flex-wrap gap-2 align-items-center justify-content-center py-3 overflow-auto">
+                  <div class="text-center pipeline-step">
+                    <div class="pipeline-box bg-primary text-white">
+                      <i class="bi bi-person-fill d-block fs-4 mb-1"></i>
+                      <strong>① Nhập liệu</strong>
+                      <div class="small opacity-75">URL + Mode + XPath</div>
+                    </div>
+                  </div>
+                  <i class="bi bi-arrow-right fs-4 text-muted"></i>
+                  <div class="text-center pipeline-step">
+                    <div class="pipeline-box bg-warning text-dark">
+                      <i class="bi bi-shield-check d-block fs-4 mb-1"></i>
+                      <strong>② Kiểm duyệt</strong>
+                      <div class="small opacity-75">IP / SSRF / Robots.txt</div>
+                    </div>
+                  </div>
+                  <i class="bi bi-arrow-right fs-4 text-muted"></i>
+                  <div class="text-center pipeline-step">
+                    <div class="pipeline-box bg-info text-white">
+                      <i class="bi bi-cloud-download d-block fs-4 mb-1"></i>
+                      <strong>③ Thu thập HTML</strong>
+                      <div class="small opacity-75">cURL + Redirect safe</div>
+                    </div>
+                  </div>
+                  <i class="bi bi-arrow-right fs-4 text-muted"></i>
+                  <div class="text-center pipeline-step">
+                    <div class="pipeline-box bg-success text-white">
+                      <i class="bi bi-code-square d-block fs-4 mb-1"></i>
+                      <strong>④ Phân tích HTML</strong>
+                      <div class="small opacity-75">DOMDocument + XPath</div>
+                    </div>
+                  </div>
+                  <i class="bi bi-arrow-right fs-4 text-muted"></i>
+                  <div class="text-center pipeline-step">
+                    <div class="pipeline-box bg-secondary text-white">
+                      <i class="bi bi-database d-block fs-4 mb-1"></i>
+                      <strong>⑤ Lưu trữ</strong>
+                      <div class="small opacity-75">JSON + LOCK_EX</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="theory-box mb-0">
+                <h6><i class="bi bi-stack me-2 text-primary"></i>B. Công nghệ sử dụng trong hệ thống</h6>
+                <div class="row g-2 mt-1">
+                  <div class="col-6 col-md-3">
+                    <div class="border rounded p-2 text-center small h-100">
+                      <i class="bi bi-filetype-php fs-3 text-primary d-block mb-1"></i>
+                      <strong>PHP 8+</strong><br>
+                      <span class="text-muted">Backend API, DOMDocument, cURL</span>
+                    </div>
+                  </div>
+                  <div class="col-6 col-md-3">
+                    <div class="border rounded p-2 text-center small h-100">
+                      <i class="bi bi-filetype-js fs-3 text-warning d-block mb-1"></i>
+                      <strong>Vanilla JS (ES2022)</strong><br>
+                      <span class="text-muted">Async/await Fetch API, DOM rendering</span>
+                    </div>
+                  </div>
+                  <div class="col-6 col-md-3">
+                    <div class="border rounded p-2 text-center small h-100">
+                      <i class="bi bi-bootstrap fs-3 text-purple d-block mb-1" style="color:#7952b3"></i>
+                      <strong>Bootstrap 5.3</strong><br>
+                      <span class="text-muted">Responsive UI, Tabs, Modals</span>
+                    </div>
+                  </div>
+                  <div class="col-6 col-md-3">
+                    <div class="border rounded p-2 text-center small h-100">
+                      <i class="bi bi-filetype-json fs-3 text-success d-block mb-1"></i>
+                      <strong>JSON (File-based DB)</strong><br>
+                      <span class="text-muted">Lưu trữ cục bộ, LOCK_EX, Export CSV</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
 
     </div>
@@ -853,15 +960,20 @@
   </div>
 </div>
 
-<!-- Chân trang học thuật -->
-<footer class="academic-footer text-center">
-  <div class="container">
-    <div><strong>Đề tài Môn học: Web Crawling &amp; Data Extraction</strong> &middot; Nhóm Sinh viên Năm 3</div>
-    <div class="text-muted mt-1">Dùng cho mục đích học tập và nghiên cứu công nghệ &middot; 2026</div>
-  </div>
-</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="assets/js/main.js"></script>
+<script src="assets/js/main.js?v=<?= time() ?>"></script>
+
+<style>
+/* Pipeline diagram styles */
+.pipeline-step { min-width: 110px; }
+.pipeline-box {
+  border-radius: 10px;
+  padding: 12px 10px;
+  min-width: 100px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.12);
+  font-size: .82rem;
+}
+</style>
 </body>
 </html>
