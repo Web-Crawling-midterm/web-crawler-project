@@ -31,8 +31,7 @@ $csrf = csrfToken();
 
     <div class="d-flex align-items-center gap-3 user-box">
       <span class="text-white">
-        <i class="bi bi-person-circle me-1"></i>
-        <strong><?= htmlspecialchars($authUser['username'], ENT_QUOTES) ?></strong>
+        <i class="bi bi-person-circle me-1" title="<?= htmlspecialchars($authUser['username'], ENT_QUOTES) ?>"></i>
         <span class="badge <?= $authUser['role'] === 'admin' ? 'bg-warning text-dark' : 'bg-light text-dark' ?> ms-1"><?= htmlspecialchars($authUser['role'], ENT_QUOTES) ?></span>
       </span>
       <button type="button" id="logout-btn" class="btn btn-sm btn-outline-light">
@@ -43,27 +42,35 @@ $csrf = csrfToken();
   </div>
 </nav>
 
-<div class="container py-3">
+<!-- Banner giới thiệu (ảnh nền mạng lưới) -->
+<header class="app-hero">
+  <div class="container">
+    <h1>Thu thập dữ liệu web gọn gàng, có kiểm soát</h1>
+    <p>Nhập một URL, hệ thống kiểm tra robots.txt, tải trang và bóc tách bài viết, sản phẩm, liên kết, hình ảnh để bạn xem, lọc và xuất ra CSV.</p>
+  </div>
+</header>
+
+<div class="container py-3 app-main">
   <!-- Thanh điều hướng Tabs -->
   <ul class="nav nav-tabs academic-tabs" id="projectTabs" role="tablist">
     <li class="nav-item" role="presentation">
       <button class="nav-link active" id="crawler-tab" data-bs-toggle="tab" data-bs-target="#tab-crawler" type="button" role="tab">
-        <i class="bi bi-cloud-arrow-down me-1"></i> Thu thập Dữ liệu (Live Demo)
+        <i class="bi bi-cloud-arrow-down me-1"></i> Thu thập
       </button>
     </li>
     <li class="nav-item" role="presentation">
       <button class="nav-link" id="robots-tab" data-bs-toggle="tab" data-bs-target="#tab-robots" type="button" role="tab">
-        <i class="bi bi-shield-check me-1"></i> Kiểm tra Robots.txt &amp; Đạo đức
+        <i class="bi bi-shield-check me-1"></i> Robots.txt &amp; đạo đức
       </button>
     </li>
     <li class="nav-item" role="presentation">
       <button class="nav-link" id="saved-tab" data-bs-toggle="tab" data-bs-target="#tab-saved" type="button" role="tab">
-        <i class="bi bi-database me-1"></i> Dữ liệu Đã Lưu &amp; Lịch sử
+        <i class="bi bi-database me-1"></i> Đã lưu &amp; lịch sử
       </button>
     </li>
     <li class="nav-item" role="presentation">
       <button class="nav-link" id="theory-tab" data-bs-toggle="tab" data-bs-target="#tab-theory" type="button" role="tab">
-        <i class="bi bi-journal-text me-1"></i> Báo cáo Lý thuyết (Key Points)
+        <i class="bi bi-journal-text me-1"></i> Lý thuyết
       </button>
     </li>
   </ul>
@@ -74,65 +81,38 @@ $csrf = csrfToken();
     <!-- ==================== TAB 1: CRAWLER DEMO ==================== -->
     <div class="tab-pane fade show active" id="tab-crawler" role="tabpanel" aria-labelledby="crawler-tab">
       
-      <!-- Card Form Thu thập -->
-      <section class="card card-academic" aria-labelledby="crawler-title">
-        <div class="card-header">
-          <span><i class="bi bi-sliders me-2"></i>Tham số cấu hình Crawler</span>
-          <span class="badge text-bg-light border text-muted small fw-normal">Polite Crawler &middot; Timeout 20s</span>
-        </div>
+      <!-- Thanh thu thập -->
+      <section class="card card-academic crawl-card" aria-label="Cấu hình crawler">
         <div class="card-body">
           <form id="crawl-form" novalidate>
-            <div class="row g-3 align-items-end">
-              <div class="col-12 col-md-6 col-lg-6">
-                <label for="url-input" class="form-label fw-semibold small">URL Website nguồn cần thu thập (Blog, Store, File...):</label>
-                <div class="input-group">
-                  <span class="input-group-text bg-light"><i class="bi bi-link-45deg"></i></span>
-                  <input type="url" class="form-control" id="url-input"
-                         placeholder="https://books.toscrape.com/ hoặc URL Blog/Tệp..." autocomplete="off" required>
-                </div>
-                <div class="invalid-feedback" id="url-feedback">Vui lòng nhập URL hợp lệ bắt đầu bằng http:// hoặc https://</div>
+            <div class="crawl-bar">
+              <div class="input-group crawl-url">
+                <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
+                <input type="url" class="form-control" id="url-input" aria-label="URL website cần thu thập"
+                       placeholder="Dán URL website cần thu thập, ví dụ https://books.toscrape.com/" autocomplete="off" required>
               </div>
-
-              <div class="col-12 col-md-3 col-lg-3">
-                <label for="crawl-mode" class="form-label fw-semibold small">Bộ lọc trích xuất mục tiêu:</label>
-                <select class="form-select" id="crawl-mode">
-                  <option value="all">⚡ Tất cả (Tự động phát hiện)</option>
-                  <option value="blog">📰 Blog &amp; Bài viết (Tin tức)</option>
-                  <option value="headings">📑 Cây Tiêu đề (Headings H1-H6)</option>
-                  <option value="files">📁 Tệp tin &amp; Tài liệu (PDF, ZIP...)</option>
-                  <option value="links">🔗 Danh sách Liên kết (Links)</option>
-                  <option value="images">🖼️ Bộ sưu tập Hình ảnh</option>
-                  <option value="products">🛍️ Sản phẩm (Books to Scrape)</option>
-                </select>
-              </div>
-
-              <div class="col-12 col-md-3 col-lg-3">
-                <button type="submit" class="btn btn-primary w-100" id="crawl-btn">
-                  <span class="spinner-border spinner-border-sm me-1 d-none" id="btn-spinner" role="status"></span>
-                  <i class="bi bi-play-circle me-1" id="btn-icon"></i>
-                  <span id="btn-text">Bắt đầu Crawl</span>
-                </button>
-              </div>
+              <select class="form-select crawl-mode" id="crawl-mode" aria-label="Loại dữ liệu cần lấy">
+                <option value="all">⚡ Tất cả (tự phát hiện)</option>
+                <option value="blog">📰 Blog &amp; bài viết</option>
+                <option value="files">📁 Tệp tin &amp; tài liệu</option>
+                <option value="links">🔗 Liên kết</option>
+                <option value="images">🖼️ Hình ảnh</option>
+                <option value="products">🛍️ Sản phẩm</option>
+              </select>
+              <button type="submit" class="btn btn-primary crawl-go" id="crawl-btn">
+                <span class="spinner-border spinner-border-sm me-1 d-none" id="btn-spinner" role="status"></span>
+                <i class="bi bi-play-fill me-1" id="btn-icon"></i>
+                <span id="btn-text">Bắt đầu Crawl</span>
+              </button>
             </div>
+            <div class="invalid-feedback" id="url-feedback">Vui lòng nhập URL hợp lệ bắt đầu bằng http:// hoặc https://</div>
 
-            <!-- Nguồn mẫu -->
-            <div class="mt-3 pt-2 border-top">
-              <span class="small text-muted me-2"><i class="bi bi-lightning-charge me-1"></i>Website thử nghiệm mẫu:</span>
-              <button type="button" class="quick-pill example-url" data-url="https://books.toscrape.com/">Books to Scrape (Sản phẩm)</button>
-              <button type="button" class="quick-pill example-url" data-url="https://vnexpress.net/so-hoa">VnExpress Số Hóa (Blog/Tin tức)</button>
+            <div class="crawl-meta">
+              <span class="meta-label">Thử nhanh</span>
+              <button type="button" class="quick-pill example-url" data-url="https://books.toscrape.com/">Books to Scrape</button>
+              <button type="button" class="quick-pill example-url" data-url="https://vnexpress.net/so-hoa">VnExpress Số hóa</button>
               <button type="button" class="quick-pill example-url" data-url="https://quotes.toscrape.com/">Quotes to Scrape</button>
-
-            </div>
-
-            <!-- Ghi chú cơ chế -->
-            <div class="small text-muted mt-2 d-flex align-items-center justify-content-between flex-wrap gap-2">
-              <div>
-                <i class="bi bi-shield-lock me-1 text-success"></i>
-                Hỗ trợ trích xuất chuyên sâu: Blog &amp; Tin tức, Tiêu đề (H1-H6), Tệp tin, Liên kết, Hình ảnh; kiểm tra an toàn SSRF và robots.txt.
-              </div>
-              <a href="#" class="text-decoration-none small" id="quick-check-robots-link">
-                <i class="bi bi-box-arrow-up-right me-1"></i>Kiểm tra robots.txt của URL này
-              </a>
+              <a href="#" class="meta-link" id="quick-check-robots-link"><i class="bi bi-shield-check me-1"></i>Kiểm tra robots.txt</a>
             </div>
           </form>
         </div>
@@ -146,19 +126,19 @@ $csrf = csrfToken();
         <div class="col-4 col-md-2">
           <div class="stat-box">
             <div class="stat-num" id="stat-articles">0</div>
-            <div class="stat-desc"><i class="bi bi-journal-richtext me-1"></i>Bài viết Blog</div>
+            <div class="stat-desc"><i class="bi bi-journal-richtext me-1"></i>Bài viết</div>
           </div>
         </div>
-        <div class="col-4 col-md-2">
+        <div class="col-4 col-md-2" hidden>
           <div class="stat-box">
             <div class="stat-num" id="stat-headings">0</div>
-            <div class="stat-desc"><i class="bi bi-type-h1 me-1"></i>Cây Tiêu đề</div>
+            <div class="stat-desc"><i class="bi bi-type-h1 me-1"></i>Tiêu đề</div>
           </div>
         </div>
         <div class="col-4 col-md-2">
           <div class="stat-box">
             <div class="stat-num" id="stat-files">0</div>
-            <div class="stat-desc"><i class="bi bi-file-earmark-arrow-down me-1"></i>Tệp tài liệu</div>
+            <div class="stat-desc"><i class="bi bi-file-earmark-arrow-down me-1"></i>Tệp tin</div>
           </div>
         </div>
         <div class="col-4 col-md-2">
@@ -193,12 +173,12 @@ $csrf = csrfToken();
           <ul class="nav nav-pills nav-fill small gap-1 flex-wrap" id="data-view-pills" role="tablist">
             <li class="nav-item" role="presentation">
               <button class="nav-link active py-1 px-2.5" id="view-articles-tab" data-view="articles" type="button">
-                <i class="bi bi-journal-richtext me-1"></i>Bài viết / Blog (<span id="pill-art-count">0</span>)
+                <i class="bi bi-journal-richtext me-1"></i>Bài viết (<span id="pill-art-count">0</span>)
               </button>
             </li>
-            <li class="nav-item" role="presentation">
+            <li class="nav-item" role="presentation" hidden>
               <button class="nav-link py-1 px-2.5" id="view-headings-tab" data-view="headings" type="button">
-                <i class="bi bi-type-h1 me-1"></i>Cây Tiêu đề (<span id="pill-head-count">0</span>)
+                <i class="bi bi-type-h1 me-1"></i>Tiêu đề (<span id="pill-head-count">0</span>)
               </button>
             </li>
             <li class="nav-item" role="presentation">
@@ -234,12 +214,12 @@ $csrf = csrfToken();
           <!-- Thanh công cụ xuất dữ liệu & Menu xuất dữ liệu cụ thể -->
           <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3 pb-2 border-bottom">
             <div class="small text-muted" id="view-hint-text">
-              <i class="bi bi-info-circle me-1"></i>Chọn tab để lọc và xem dữ liệu cụ thể tương ứng.
+              <i class="bi bi-info-circle me-1"></i>Chọn một nhóm dữ liệu để xem và lọc.
             </div>
 
             <!-- Nhóm nút Export -->
             <div class="d-flex flex-wrap gap-2 align-items-center" id="export-toolbar">
-              <span class="small text-muted me-1"><i class="bi bi-download me-1"></i>Xuất dữ liệu:</span>
+              <span class="small text-muted me-1"><i class="bi bi-download me-1"></i>Xuất:</span>
               <button type="button" class="btn btn-outline-success btn-sm" id="btn-export-csv" title="Tải về file CSV (mở bằng Excel)">
                 <i class="bi bi-file-earmark-spreadsheet me-1"></i>CSV
               </button>

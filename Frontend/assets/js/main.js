@@ -726,7 +726,6 @@
     // Chọn view thông minh dựa trên chế độ trích xuất hoặc kết quả tìm thấy
     const mode = crawlModeSelect.value;
     if (mode === "blog") switchView("articles");
-    else if (mode === "headings") switchView("headings");
     else if (mode === "files") switchView("files");
     else if (mode === "products") switchView("products");
     else if (mode === "links") switchView("links");
@@ -736,7 +735,6 @@
       if (state.articles.length > 0) switchView("articles");
       else if (state.items.length > 0) switchView("products");
       else if (state.files.length > 0) switchView("files");
-      else if (state.headings.length > 0) switchView("headings");
       else switchView("links");
     }
   }
@@ -1053,7 +1051,11 @@
   async function loadSavedData() {
     try {
       const res = await fetch(API_RESULTS, { headers: { Accept: "application/json" } });
-      if (!res.ok) return;
+      if (!res.ok) {
+        let msg = "Máy chủ trả về lỗi " + res.status + ".";
+        try { const e = await res.json(); if (e && e.message) msg = e.message; } catch (_) {}
+        throw new Error(msg);
+      }
       const data = await res.json();
 
       const items = Array.isArray(data.items) ? data.items : [];
@@ -1119,6 +1121,7 @@
 
     } catch (err) {
       console.warn("Không tải được dữ liệu đã lưu:", err);
+      savedHistoryBody.innerHTML = '<tr><td colspan="10" class="text-center py-4 text-danger"><i class="bi bi-exclamation-triangle me-1"></i>Không tải được lịch sử: ' + escapeHtml(err.message || "lỗi không xác định") + ' (kiểm tra file data/crawl_data.json).</td></tr>';
     }
   }
 

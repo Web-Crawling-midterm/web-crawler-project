@@ -5,3 +5,6 @@ data/login_attempts.json
 data/rate_limits.json
 data/password_resets.json
 data/outbox/
+
+# Dữ liệu crawl (tránh xung đột khi git merge)
+data/crawl_data.json
