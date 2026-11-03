@@ -1,6 +1,6 @@
 <?php
 /** Trang đăng nhập: kiểm tra CSRF, giới hạn số lần thử, tạo session. Có thể dùng tên đăng nhập hoặc email. */
-require_once __DIR__ . '/../backend/auth.php';
+require_once __DIR__ . '/../../backend/auth.php';
 
 if (authUser() !== null) {
     header('Location: index.php');
@@ -30,7 +30,7 @@ $pageTitle = 'Đăng nhập';
 $heading   = 'Hệ Thống Web Crawler';
 $subtitle  = 'Đăng nhập để tiếp tục';
 $icon      = 'bi-diagram-3-fill';
-require __DIR__ . '/partials/auth_top.php';
+require __DIR__ . '/../partials/auth_top.php';
 ?>
     <?php if ($info !== ''): ?><div class="alert alert-success"><i class="bi bi-check-circle-fill me-2"></i><?= htmlspecialchars($info, ENT_QUOTES) ?></div><?php endif; ?>
     <?php if ($error !== ''): ?><div class="alert alert-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i><?= htmlspecialchars($error, ENT_QUOTES) ?></div><?php endif; ?>
@@ -63,4 +63,4 @@ require __DIR__ . '/partials/auth_top.php';
       <code>admin</code> / <code>Admin@123</code> (quản trị viên)<br>
       <code>user</code> / <code>User@123</code> (người dùng)
     </div>
-<?php require __DIR__ . '/partials/auth_bottom.php'; ?>
+<?php require __DIR__ . '/../partials/auth_bottom.php'; ?>

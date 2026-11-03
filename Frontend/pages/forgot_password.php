@@ -1,6 +1,6 @@
 <?php
 /** Quên mật khẩu: nhập email để nhận liên kết đặt lại (có hiệu lực 15 phút). */
-require_once __DIR__ . '/../backend/auth.php';
+require_once __DIR__ . '/../../backend/auth.php';
 
 $error = '';
 $info  = '';
@@ -25,7 +25,7 @@ $pageTitle = 'Quên mật khẩu';
 $heading   = 'Quên mật khẩu?';
 $subtitle  = 'Nhập email đã đăng ký, chúng tôi sẽ gửi liên kết đặt lại';
 $icon      = 'bi-key-fill';
-require __DIR__ . '/partials/auth_top.php';
+require __DIR__ . '/../partials/auth_top.php';
 ?>
     <?php if ($error !== ''): ?><div class="alert alert-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i><?= htmlspecialchars($error, ENT_QUOTES) ?></div><?php endif; ?>
     <?php if ($info !== ''): ?>
@@ -50,4 +50,4 @@ require __DIR__ . '/partials/auth_top.php';
     </form>
 
     <div class="auth-links justify-content-center"><a href="login.php"><i class="bi bi-arrow-left"></i> Quay lại đăng nhập</a></div>
-<?php require __DIR__ . '/partials/auth_bottom.php'; ?>
+<?php require __DIR__ . '/../partials/auth_bottom.php'; ?>

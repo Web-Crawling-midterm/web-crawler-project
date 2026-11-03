@@ -3,7 +3,7 @@
  * Trang chủ giới thiệu hệ thống (công khai, không cần đăng nhập).
  * Góc trên bên phải có nút Đăng nhập; đăng nhập xong sẽ vào giao diện crawler (index.php).
  */
-require_once __DIR__ . '/../backend/auth.php';
+require_once __DIR__ . '/../../backend/auth.php';
 $user = authUser();
 ?>
 <!DOCTYPE html>
@@ -15,7 +15,7 @@ $user = authUser();
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-  <link href="assets/css/home.css" rel="stylesheet">
+  <link href="../assets/css/home.css" rel="stylesheet">
 </head>
 <body>
 

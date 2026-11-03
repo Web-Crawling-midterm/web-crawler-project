@@ -28,9 +28,15 @@
   // ===== Cấu hình & Định tuyến API thông minh =====
   function getApiPath(endpoint) {
     const path = window.location.pathname;
+    // Nếu đang ở trong thư mục /pages/ (ví dụ Frontend/pages/index.php) -> cần lùi 2 cấp
+    if (path.includes("/pages/") || path.includes("/Pages/")) {
+      return "../../backend/" + endpoint;
+    }
+    // Nếu đang ở trực tiếp trong thư mục /Frontend/ -> cần lùi 1 cấp
     if (path.includes("/Frontend/") || path.includes("/frontend/") || path.endsWith("/Frontend") || path.endsWith("/frontend")) {
       return "../backend/" + endpoint;
     }
+    // Mặc định ở thư mục gốc
     return "backend/" + endpoint;
   }
 
@@ -299,7 +305,7 @@
     state.busy = busy;
     crawlBtn.disabled = busy;
     urlInput.disabled = busy;
-    maxPagesInput.disabled = busy;
+    if (maxPagesInput) maxPagesInput.disabled = busy;
     crawlModeSelect.disabled = busy;
     btnSpinner.classList.toggle("d-none", !busy);
     btnIcon.classList.toggle("d-none", busy);
@@ -909,8 +915,8 @@
     if (state.busy) return;
 
     const url = urlInput.value.trim();
-    const maxPages = Math.min(Math.max(parseInt(maxPagesInput.value, 10) || 1, 1), 10);
-    const customXpath = (customXpathInput.value || "").trim();
+    const maxPages = maxPagesInput ? Math.min(Math.max(parseInt(maxPagesInput.value, 10) || 1, 1), 10) : 1;
+    const customXpath = customXpathInput ? (customXpathInput.value || "").trim() : "";
 
     let valid = true;
     urlInput.classList.toggle("is-invalid", !isValidUrl(url));
@@ -1314,14 +1320,18 @@
   // ===== Gán sự kiện (Event Listeners) =====
   form.addEventListener("submit", handleSubmit);
   urlInput.addEventListener("input", () => urlInput.classList.remove("is-invalid"));
-  maxPagesInput.addEventListener("input", () => maxPagesInput.classList.remove("is-invalid"));
+  if (maxPagesInput) {
+    maxPagesInput.addEventListener("input", () => maxPagesInput.classList.remove("is-invalid"));
+  }
 
-  // Presets XPath
-  document.querySelectorAll(".xpath-preset").forEach((badge) => {
-    badge.addEventListener("click", () => {
-      customXpathInput.value = badge.dataset.xpath;
+  // Presets XPath (nếu có)
+  if (customXpathInput) {
+    document.querySelectorAll(".xpath-preset").forEach((badge) => {
+      badge.addEventListener("click", () => {
+        customXpathInput.value = badge.dataset.xpath;
+      });
     });
-  });
+  }
 
   // Filter Articles
   filterArtInput.addEventListener("input", () => {

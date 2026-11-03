@@ -1,6 +1,6 @@
 <?php
 /** Trang đăng ký tài khoản mới (vai trò mặc định: user). */
-require_once __DIR__ . '/../backend/auth.php';
+require_once __DIR__ . '/../../backend/auth.php';
 
 if (authUser() !== null) {
     header('Location: index.php');
@@ -31,7 +31,7 @@ $pageTitle = 'Đăng ký';
 $heading   = 'Tạo tài khoản';
 $subtitle  = 'Đăng ký để bắt đầu thu thập dữ liệu';
 $icon      = 'bi-person-plus-fill';
-require __DIR__ . '/partials/auth_top.php';
+require __DIR__ . '/../partials/auth_top.php';
 ?>
     <?php if ($error !== ''): ?><div class="alert alert-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i><?= htmlspecialchars($error, ENT_QUOTES) ?></div><?php endif; ?>
 
@@ -85,4 +85,4 @@ require __DIR__ . '/partials/auth_top.php';
         });
       })();
     </script>
-<?php require __DIR__ . '/partials/auth_bottom.php'; ?>
+<?php require __DIR__ . '/../partials/auth_bottom.php'; ?>

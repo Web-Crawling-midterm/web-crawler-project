@@ -1,6 +1,6 @@
 <?php
 /** Đặt lại mật khẩu bằng token trong liên kết (token chỉ dùng 1 lần, hết hạn sau 15 phút). */
-require_once __DIR__ . '/../backend/auth.php';
+require_once __DIR__ . '/../../backend/auth.php';
 header('Referrer-Policy: no-referrer');          // không để lộ token qua header Referer
 header('Cache-Control: no-store');
 
@@ -29,7 +29,7 @@ $pageTitle = 'Đặt lại mật khẩu';
 $heading   = 'Đặt lại mật khẩu';
 $subtitle  = $valid ? 'Nhập mật khẩu mới cho tài khoản của bạn' : 'Không thể tiếp tục';
 $icon      = 'bi-shield-lock-fill';
-require __DIR__ . '/partials/auth_top.php';
+require __DIR__ . '/../partials/auth_top.php';
 ?>
     <?php if (!$valid): ?>
       <div class="alert alert-danger"><i class="bi bi-x-octagon-fill me-2"></i><?= htmlspecialchars($error ?: 'Liên kết không hợp lệ hoặc đã hết hạn. Hãy yêu cầu liên kết mới.', ENT_QUOTES) ?></div>
@@ -54,4 +54,4 @@ require __DIR__ . '/partials/auth_top.php';
       </form>
     <?php endif; ?>
     <div class="auth-links justify-content-center"><a href="login.php"><i class="bi bi-arrow-left"></i> Quay lại đăng nhập</a></div>
-<?php require __DIR__ . '/partials/auth_bottom.php'; ?>
+<?php require __DIR__ . '/../partials/auth_bottom.php'; ?>
