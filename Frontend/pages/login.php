@@ -58,9 +58,5 @@ require __DIR__ . '/../partials/auth_top.php';
 
     <div class="auth-links justify-content-center"><span class="text-muted">Chưa có tài khoản?</span> <a href="register.php">Đăng ký ngay</a></div>
 
-    <div class="auth-hint">
-      <strong>Tài khoản demo:</strong><br>
-      <code>admin</code> / <code>Admin@123</code> (quản trị viên)<br>
-      <code>user</code> / <code>User@123</code> (người dùng)
-    </div>
+
 <?php require __DIR__ . '/../partials/auth_bottom.php'; ?>

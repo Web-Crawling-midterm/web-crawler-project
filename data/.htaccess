@@ -1,8 +1,0 @@
-# Chặn truy cập trực tiếp vào dữ liệu (users.json, crawl_data.json...) khi chạy trên Apache/XAMPP
-<IfModule mod_authz_core.c>
-    Require all denied
-</IfModule>
-<IfModule !mod_authz_core.c>
-    Order allow,deny
-    Deny from all
-</IfModule>

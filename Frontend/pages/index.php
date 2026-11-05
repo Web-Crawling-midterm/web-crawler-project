@@ -330,7 +330,8 @@ $csrf = csrfToken();
                   <tr>
                     <th style="width: 45px;">#</th>
                     <th style="width: 90px;" class="text-center">Định dạng</th>
-                    <th>Tên tệp tin</th>
+                    <th style="min-width: 320px; width: 34%;">Tiêu đề</th>
+                    <th style="min-width: 220px; width: 30%;">Tên tệp tin</th>
                     <th>Văn bản liên kết (Anchor text)</th>
                     <th style="width: 110px;" class="text-center">Phạm vi</th>
                     <th style="width: 110px;" class="text-center">Thao tác</th>

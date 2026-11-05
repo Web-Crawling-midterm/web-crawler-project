@@ -441,7 +441,8 @@
     return (state.files || []).filter((f) => {
       const name = String(f.name || "").toLowerCase();
       const text = String(f.anchor_text || "").toLowerCase();
-      if (q && !name.includes(q) && !text.includes(q)) return false;
+      const title = String(f.title || "").toLowerCase();
+      if (q && !name.includes(q) && !text.includes(q) && !title.includes(q)) return false;
 
       if (ext) {
         const fExt = String(f.extension || "").toLowerCase();
@@ -466,6 +467,10 @@
       const badge = fileBadge(f.extension);
       const name = escapeHtml(f.name || "Tệp không tên");
       const anchor = escapeHtml(f.anchor_text || "—");
+      const titleText = escapeHtml(f.title || f.anchor_text || f.name || "Tệp không tên");
+      const titleCell = href
+        ? '<a href="' + escapeHtml(href) + '" target="_blank" rel="noopener noreferrer" class="fw-semibold text-break text-decoration-none" title="Mở liên kết tệp">' + titleText + ' <i class="bi bi-box-arrow-up-right small"></i></a>'
+        : '<span class="fw-semibold text-break">' + titleText + '</span>';
       const isInternal = f.is_internal
         ? '<span class="badge bg-light text-dark border">Nội bộ</span>'
         : '<span class="badge bg-light text-secondary border">Bên ngoài</span>';
@@ -479,7 +484,8 @@
         "<tr>" +
         '<td class="text-muted small">' + (idx + 1) + "</td>" +
         '<td class="text-center">' + badge + "</td>" +
-        '<td><div class="fw-semibold text-break">' + name + '</div><small class="text-muted font-monospace">' + escapeHtml(f.url) + '</small></td>' +
+        '<td style="min-width: 320px;">' + titleCell + "</td>" +
+        '<td><div class="fw-semibold text-break">' + name + '</div><small class="text-muted font-monospace text-break d-block">' + escapeHtml(f.url) + '</small></td>' +
         '<td class="small text-secondary">' + anchor + "</td>" +
         '<td class="text-center">' + isInternal + "</td>" +
         '<td class="text-center">' + downloadBtn + "</td>" +
@@ -791,6 +797,7 @@
         const fileExt = (currentUrl.split('.').pop() || 'file').split(/[?#]/)[0];
         allFiles.push({
           name: currentUrl.split('/').pop() || "Tệp tải về",
+          title: currentUrl.split('/').pop() || "Tệp tải về",
           url: currentUrl,
           extension: fileExt,
           anchor_text: "Liên kết tệp trực tiếp",
@@ -868,7 +875,7 @@
 
     // 3. Tự động lưu vào database JSON
     try {
-      await fetch(API_SAVE, {
+      const saveRes = await fetch(API_SAVE, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({
@@ -888,6 +895,10 @@
           products: allProducts
         })
       });
+      const saveJson = await saveRes.json().catch(() => null);
+      if (!saveRes.ok || !saveJson || !saveJson.success) {
+        warnings.push("Không lưu được vào crawl_data.json: " + ((saveJson && saveJson.message) || ("HTTP " + saveRes.status)));
+      }
     } catch (saveErr) {
       console.warn("Không thể tự động lưu dữ liệu:", saveErr);
     }
@@ -1229,7 +1240,7 @@
       cols = ["tag", "level", "text", "id"];
       list = getFilteredHeadings();
     } else if (type === "files") {
-      cols = ["name", "extension", "url", "anchor_text", "is_internal"];
+      cols = ["title", "name", "extension", "url", "anchor_text", "is_internal"];
       list = getFilteredFiles();
     } else if (type === "products") {
       cols = ["title", "url", "price", "currency", "rating", "availability", "image_url"];

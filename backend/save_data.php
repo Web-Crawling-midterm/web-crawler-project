@@ -41,13 +41,15 @@ function saveCrawlData($url, $html, $extra = [])
         ];
     }
 
-    // 4. Giới hạn kích thước HTML tối đa 2 MB
-    if (strlen($html) > 2 * 1024 * 1024) {
-        return [
-            'success' => false,
-            'status_code' => 413,
-            'message' => 'Dữ liệu HTML vượt quá giới hạn 2 MB.'
-        ];
+    // 4. Giới hạn kích thước HTML tối đa 2 MB.
+    // Trang quá lớn (vd: Wikipedia "Việt Nam") KHÔNG bị từ chối nữa mà được cắt bớt
+    // phần HTML thô; các dữ liệu đã bóc tách (links, images, headings...) vẫn lưu đầy đủ.
+    $maxHtmlBytes = 2 * 1024 * 1024;
+    $htmlTruncated = false;
+
+    if (strlen($html) > $maxHtmlBytes) {
+        $html = mb_strcut($html, 0, $maxHtmlBytes, 'UTF-8');
+        $htmlTruncated = true;
     }
 
     // 5. Tạo thư mục lưu dữ liệu
@@ -112,7 +114,8 @@ function saveCrawlData($url, $html, $extra = [])
         'links' => $extra['links'] ?? null,
         'images' => $extra['images'] ?? null,
         'products' => $extra['products'] ?? null,
-        'html' => $html
+        'html' => $html,
+        'html_truncated' => $htmlTruncated ? true : null
     ];
 
     // Loại bỏ các trường null để file JSON gọn gàng
@@ -126,7 +129,7 @@ function saveCrawlData($url, $html, $extra = [])
     // 9. Chuyển dữ liệu sang JSON
     $jsonData = json_encode(
         $records,
-        JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT
+        JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT | JSON_INVALID_UTF8_SUBSTITUTE | JSON_PARTIAL_OUTPUT_ON_ERROR
     );
 
     if ($jsonData === false) {
@@ -154,7 +157,8 @@ function saveCrawlData($url, $html, $extra = [])
         'message' => 'Đã lưu dữ liệu crawl thành công.',
         'url' => $url,
         'saved_at' => $newRecord['saved_at'],
-        'file' => 'data/crawl_data.json'
+        'file' => 'data/crawl_data.json',
+        'html_truncated' => $htmlTruncated
     ];
 }
 

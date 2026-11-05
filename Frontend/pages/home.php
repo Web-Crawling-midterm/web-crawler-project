@@ -19,8 +19,7 @@ $user = authUser();
 </head>
 <body>
 
-<!-- Thanh trên cùng -->
-<div class="topbar">Đồ án môn Lập trình Web và Ứng dụng · Đề tài 7: Web Crawling</div>
+
 
 <!-- Menu -->
 <header class="site-header">

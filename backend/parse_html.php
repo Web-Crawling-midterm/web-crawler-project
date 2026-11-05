@@ -405,8 +405,16 @@ foreach ($xpath->query('//a[@href]') as $node) {
 
         if (!isset($seenFiles[$resolvedUrl])) {
             $seenFiles[$resolvedUrl] = true;
+            // Tiêu đề hiển thị: ưu tiên thuộc tính title của thẻ <a>, rồi chữ của link, cuối cùng là tên tệp
+            $linkTitleAttr = trim(preg_replace('/\s+/u', ' ', $node->getAttribute('title')));
+            $fileTitle = $linkTitleAttr !== '' ? $linkTitleAttr : $text;
+            if ($fileTitle === '') {
+                $fileTitle = $fileName ?: ('Tệp ' . strtoupper($fileExt));
+            }
+
             $files[] = [
                 'name' => $fileName ?: ($text ?: 'Tệp ' . strtoupper($fileExt)),
+                'title' => $fileTitle,
                 'url' => $resolvedUrl,
                 'extension' => $fileExt,
                 'anchor_text' => $text,
