@@ -1,5 +1,8 @@
 <?php
 
+// Đặt múi giờ Việt Nam (mặc định của PHP là UTC nên giờ bị lệch 7 tiếng)
+date_default_timezone_set('Asia/Ho_Chi_Minh');
+
 /**
  * auth.php – Xác thực và phân quyền cho hệ thống Web Crawler.
  *
