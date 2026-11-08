@@ -4,6 +4,13 @@
 
 > Dự án **không dùng Flutter, Composer, npm hay cơ sở dữ liệu**. Chỉ cần PHP và trình duyệt. Dữ liệu lưu trong các tệp JSON ở thư mục `data/`.
 
+## Demo video
+
+**Watch the project presentation / Xem video thuyết trình:**
+<https://drive.google.com/file/d/1UHkC1MRawK_yMA6p1HQFHuhcEGJ39C8f/view?usp=drive_link>
+
+The video covers the theory of web crawling, the system architecture, a live demo of every feature (register, login, crawling, robots.txt checking, export, role-based access), and an explanation of the key source code.
+
 ---
 
 ## Mục lục
